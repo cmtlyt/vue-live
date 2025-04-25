@@ -1,0 +1,26 @@
+{
+  "name": "reactivity",
+  "version": "0.0.1",
+  "description": "响应式模块",
+  "main": "index.js",
+  "module": "dist/reactivity.esm.js",
+  "files": [
+    "index.js",
+    "dist"
+  ],
+  "sideEffect": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cmtlyt/vue-live.git",
+    "directory": "packages/reactivity"
+  },
+  "buildOptions": {
+    "name": "VueReactivity",
+    "formats": [
+      "esm-builder",
+      "esm-browser",
+      "cjs",
+      "global"
+    ]
+  }
+}
