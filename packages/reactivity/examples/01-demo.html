@@ -11,9 +11,22 @@
 
       const count = ref(0);
 
-      effect(() => {
-        console.log(count.value);
-      });
+      // effect(() => {
+      //   effect(() => {
+      //     console.log(2, count.value);
+      //   });
+      //   console.log(1, count.value);
+      // });
+      effect(
+        () => {
+          console.log(count.value);
+        },
+        {
+          scheduler: () => {
+            console.log('scheduler');
+          },
+        },
+      );
 
       setTimeout(() => {
         count.value = 1;
