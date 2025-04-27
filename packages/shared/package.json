@@ -1,9 +1,9 @@
 {
-  "name": "@vlive/reactivity",
+  "name": "@vlive/shared",
   "version": "0.0.1",
-  "description": "响应式模块",
-  "main": "dist/reactivity.cjs.js",
-  "module": "dist/reactivity.esm.js",
+  "description": "工具函数",
+  "main": "dist/shared.cjs.js",
+  "module": "dist/shared.esm.js",
   "files": [
     "dist"
   ],
@@ -11,18 +11,15 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/cmtlyt/vue-live.git",
-    "directory": "packages/reactivity"
+    "directory": "packages/shared"
   },
   "buildOptions": {
-    "name": "VueReactivity",
+    "name": "VueShared",
     "formats": [
       "esm-builder",
       "esm-browser",
       "cjs",
       "global"
     ]
-  },
-  "dependencies": {
-    "@vlive/shared": "workspace:*"
   }
 }

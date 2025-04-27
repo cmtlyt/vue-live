@@ -1,3 +1,3 @@
-export function fn(a, b) {
-  return a + b;
-}
+import { isObject } from '@vlive/shared';
+
+isObject({});
