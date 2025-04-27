@@ -1,9 +1,20 @@
+import { Link } from './system';
+
 /**
  * 用来保存当前正在执行的 effect
  */
 export let activeSub: any;
 
 class ReactiveEffect {
+  /**
+   * 依赖项链表的头节点
+   */
+  deps: Link | undefined;
+  /**
+   * 依赖项链表的尾节点
+   */
+  depsTail: Link | undefined;
+
   constructor(public fn: Function) {}
 
   run() {
@@ -11,6 +22,8 @@ class ReactiveEffect {
     const prevSub = activeSub;
     // 每次执行 fn 之前把 this 放到当前激活的 sub 上
     activeSub = this;
+
+    this.depsTail = void 0;
 
     try {
       return this.fn();
