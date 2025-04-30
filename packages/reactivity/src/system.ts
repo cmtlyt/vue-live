@@ -32,6 +32,8 @@ export interface Link {
   nextDep: Link | undefined;
 }
 
+let linkPool: Link;
+
 /**
  * 建立链表关系
  */
@@ -48,13 +50,25 @@ export function link(dep: any, sub: any) {
     sub.depsTail = nextDep;
     return;
   }
-  const link = {
-    sub,
-    dep,
-    nextDep,
-    nextSub: void 0,
-    prevSub: void 0,
-  };
+
+  let link: Link;
+
+  /// 看一下 linkPool 有没有, 有的话复用, 没有的话创建新的
+  if (linkPool) {
+    link = linkPool;
+    linkPool = linkPool.nextDep;
+    link.sub = sub;
+    link.dep = dep;
+    link.nextDep = nextDep;
+  } else {
+    link = {
+      sub,
+      dep,
+      nextDep,
+      nextSub: void 0,
+      prevSub: void 0,
+    };
+  }
   // 关联链表关系, 有尾节点, 则往尾节点添加, 无尾节点, 初始化
   if (dep.subsTail) {
     dep.subsTail.nextSub = link;
@@ -137,7 +151,10 @@ export function clearTracking(link: Link) {
     }
 
     link.dep = link.sub = void 0;
-    link.nextDep = undefined;
+
+    /// 保存已经清理的留着复用
+    link.nextDep = linkPool;
+    linkPool = link;
 
     link = nextDep;
   }
