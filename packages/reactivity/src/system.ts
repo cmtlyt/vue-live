@@ -1,6 +1,6 @@
 import type { ReactiveEffect } from './effect';
 
-interface Dep {
+export interface Dependency {
   /**
    * 订阅者列表的头节点
    */
@@ -28,7 +28,7 @@ export interface Link {
   /** 上一个订阅者 */
   prevSub: Link | undefined;
   /** 依赖项 */
-  dep: Dep;
+  dep: Dependency;
   /** 下一个依赖项 */
   nextDep: Link | undefined;
 }
@@ -38,7 +38,7 @@ let linkPool: Link;
 /**
  * 建立链表关系
  */
-export function link(dep: any, sub: any) {
+export function link(dep: Dependency, sub: Sub) {
   // 尝试敷用链表节点
   const currentDep = sub.depsTail;
   /**

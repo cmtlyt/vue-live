@@ -1,3 +1,13 @@
+/**
+ * 判断传入值是否为对象
+ */
 export function isObject(v: any) {
   return typeof v === 'object' && v !== null;
+}
+
+/**
+ * 判断两个值是否发生变化
+ */
+export function hasChanged(newValue: any, oldValue: any) {
+  return !Object.is(newValue, oldValue);
 }

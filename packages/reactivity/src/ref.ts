@@ -1,5 +1,8 @@
+import type { Link } from './system';
+import { hasChanged, isObject } from '@vlive/shared';
 import { activeSub } from './effect';
-import { Link, link, propagate } from './system';
+import { link, propagate } from './system';
+import { reactive } from './reactive';
 
 enum ReactivityFlags {
   IS_REF = '__v_isRef',
@@ -27,7 +30,8 @@ class RefImpl {
   subsTail: Link;
 
   constructor(value: any) {
-    this._value = value;
+    /// 如果 value 是一个 object, 则使用 reactive 处理深度的响应式对象
+    this._value = isObject(value) ? reactive(value) : value;
   }
 
   get value() {
@@ -39,8 +43,11 @@ class RefImpl {
   }
 
   set value(v: any) {
-    // 触发更新
+    if (!hasChanged(v, this._value)) {
+      return;
+    }
     this._value = v;
+    // 触发更新
     traggerRef(this);
   }
 }

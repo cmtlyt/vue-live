@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module">
+      // import { reactive, effect } from 'vue/dist/vue.esm-browser.prod.js';
+      import { reactive, effect, ref } from '../dist/reactivity.esm.js';
+
+      /**
+       * 如果 target.a 是一个 ref, 那么就直接把他值返回, 不要让他 .value
+       * 如果更新了 state.a 他是一个 ref, 那么会修改原原始的 ref.value 的值, 等于新值
+       * 如果新值是一个 ref, 则直接覆盖, 不会修改原来的 ref 值
+       */
+      const a = ref(0);
+      const obj = {
+        a,
+        b: { c: 0 },
+        get count() {
+          return this.a;
+        },
+      };
+      const state = reactive(obj);
+      const state1 = reactive(obj);
+      const state2 = reactive(state);
+
+      effect(() => {
+        console.debug(state2.a, obj, a);
+        console.debug(state === state1, state === state2);
+      });
+
+      effect(() => {
+        console.debug('2', state.b.c);
+        console.debug(state);
+      });
+
+      setTimeout(() => {
+        state.a = 1;
+      }, 1000);
+
+      setTimeout(() => {
+        state.a = 1;
+        state.b.c = 1;
+      }, 2000);
+    </script>
+  </body>
+</html>
