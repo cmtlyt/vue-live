@@ -1,3 +1,5 @@
+import type { ReactiveEffect } from './effect';
+
 interface Dep {
   /**
    * 订阅者列表的头节点
@@ -49,7 +51,7 @@ export function link(dep: any, sub: any) {
   const link = {
     sub,
     dep,
-    nextDep: void 0,
+    nextDep,
     nextSub: void 0,
     prevSub: void 0,
   };
@@ -82,4 +84,61 @@ export function propagate(subs: Link) {
     link = link.nextSub;
   }
   queuedEffect.forEach(effect => effect.notify());
+}
+
+/**
+ * 开启依赖追踪, 将 depsTail 尾节点设置成 undefined
+ */
+export function startTrack(sub: ReactiveEffect) {
+  this.depsTail = void 0;
+}
+
+/**
+ * 结束追踪, 找到需要清理的依赖, 断开关联关系
+ */
+export function endTrack(sub: ReactiveEffect) {
+  const depsTail = sub.depsTail;
+  /**
+   * depsTail 存在, 并且 depsTail 还有 nextDep
+   */
+  if (depsTail) {
+    if (depsTail.nextDep) {
+      clearTracking(depsTail.nextDep);
+      depsTail.nextDep = void 0;
+    }
+  } else if (sub.deps) {
+    clearTracking(sub.deps);
+    sub.deps = void 0;
+  }
+}
+
+/**
+ *
+ */
+export function clearTracking(link: Link) {
+  while (link) {
+    const { prevSub, nextSub, dep, nextDep } = link;
+    /// 如果 prevSub 有, 那就把 prevSub 的下一个节点, 指向当前节点的下一个
+    /// 如果没有, 那就是头节点, 那就把 dep.subs 指向 nextSub
+    if (prevSub) {
+      prevSub.nextSub = nextSub;
+      link.nextSub = void 0;
+    } else {
+      dep.subs = nextSub;
+    }
+
+    /// 如果下一个有, 那就把 nextSub 的上一个节点, 指向当前节点的上一个节点
+    /// 如果下一个节点没有, 那她就是尾节点, 把 dep.depsTail 指向上一个节点
+    if (nextSub) {
+      nextSub.prevSub = prevSub;
+      link.prevSub = void 0;
+    } else {
+      dep.subsTail = prevSub;
+    }
+
+    link.dep = link.sub = void 0;
+    link.nextDep = undefined;
+
+    link = nextDep;
+  }
 }

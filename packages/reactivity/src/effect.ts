@@ -1,11 +1,12 @@
-import { Link } from './system';
+import type { Link } from './system';
+import { endTrack, startTrack } from './system';
 
 /**
  * 用来保存当前正在执行的 effect
  */
 export let activeSub: any;
 
-class ReactiveEffect {
+export class ReactiveEffect {
   /**
    * 依赖项链表的头节点
    */
@@ -20,14 +21,16 @@ class ReactiveEffect {
   run() {
     // 保存当前的 sub, 用于处理嵌套逻辑
     const prevSub = activeSub;
+
     // 每次执行 fn 之前把 this 放到当前激活的 sub 上
     activeSub = this;
 
-    this.depsTail = void 0;
+    startTrack(this);
 
     try {
       return this.fn();
     } finally {
+      endTrack(this);
       // 执行完之后, 把 activeSub 重置
       activeSub = prevSub;
     }
