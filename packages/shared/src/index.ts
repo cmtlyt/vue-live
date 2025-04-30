@@ -11,3 +11,7 @@ export function isObject(v: any) {
 export function hasChanged(newValue: any, oldValue: any) {
   return !Object.is(newValue, oldValue);
 }
+
+export function isFunction(v: any): v is Function {
+  return typeof v === 'function';
+}

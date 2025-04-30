@@ -32,8 +32,6 @@ const outfile = path.resolve(__dirname, '../packages', target, `dist/${target}.$
 
 const pkg = require(`../packages/${target}/package.json`);
 
-console.debug(pkg);
-
 esbuild
   .context({
     // 入口文件
@@ -51,5 +49,3 @@ esbuild
     globalName: pkg.buildOptions.name,
   })
   .then(ctx => ctx.watch());
-
-console.debug(args, positionals, entry);

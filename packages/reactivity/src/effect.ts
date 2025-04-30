@@ -6,6 +6,10 @@ import { endTrack, startTrack } from './system';
  */
 export let activeSub: any;
 
+export function setActiveSub(sub: any) {
+  activeSub = sub;
+}
+
 export class ReactiveEffect {
   /**
    * 依赖项链表的头节点
@@ -25,7 +29,7 @@ export class ReactiveEffect {
     const prevSub = activeSub;
 
     // 每次执行 fn 之前把 this 放到当前激活的 sub 上
-    activeSub = this;
+    setActiveSub(this);
 
     startTrack(this);
 
@@ -34,7 +38,7 @@ export class ReactiveEffect {
     } finally {
       endTrack(this);
       // 执行完之后, 把 activeSub 重置
-      activeSub = prevSub;
+      setActiveSub(prevSub);
     }
   }
 

@@ -1,4 +1,4 @@
-import type { ReactiveEffect } from './effect';
+import type { ComputedRefImpl } from './computed';
 
 export interface Dependency {
   /**
@@ -11,7 +11,7 @@ export interface Dependency {
   subsTail: Link | undefined;
 }
 
-interface Sub {
+export interface Sub {
   tracking: boolean;
   deps: Link | undefined;
   depsTail: Link | undefined;
@@ -88,6 +88,12 @@ export function link(dep: Dependency, sub: Sub) {
   }
 }
 
+function processComputedUpdate(computed: ComputedRefImpl) {
+  /// 更新计算属性
+  computed.update();
+  propagate(computed.subs);
+}
+
 /**
  * 传播更新的函数
  */
@@ -97,17 +103,23 @@ export function propagate(subs: Link) {
   while (link) {
     const { sub } = link;
     if (!sub.tracking) {
-      queuedEffect.push(link.sub);
+      if ('update' in sub) {
+        processComputedUpdate(sub as any);
+      } else {
+        queuedEffect.push(link.sub);
+      }
     }
     link = link.nextSub;
   }
-  queuedEffect.forEach(effect => effect.notify());
+  queuedEffect.forEach(effect => {
+    effect.notify();
+  });
 }
 
 /**
  * 开启依赖追踪, 将 depsTail 尾节点设置成 undefined
  */
-export function startTrack(sub: ReactiveEffect) {
+export function startTrack(sub: Sub) {
   sub.tracking = true;
   sub.depsTail = void 0;
 }
@@ -115,7 +127,7 @@ export function startTrack(sub: ReactiveEffect) {
 /**
  * 结束追踪, 找到需要清理的依赖, 断开关联关系
  */
-export function endTrack(sub: ReactiveEffect) {
+export function endTrack(sub: Sub) {
   sub.tracking = false;
   const depsTail = sub.depsTail;
   /**

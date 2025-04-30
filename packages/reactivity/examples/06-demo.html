@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module">
+      // import { ref, effect, computed } from 'vue/dist/vue.esm-browser.prod.js';
+      import { effect, ref, computed } from '../dist/reactivity.esm.js';
+
+      const count = ref(0);
+      /**
+       * computed 比较特殊
+       * 它既是一个 sub, 又是一个 dep
+       */
+      const c = computed(() => count.value + 1);
+
+      effect(() => {
+        console.debug(c.value);
+      });
+
+      setTimeout(() => {
+        count.value = 1;
+      }, 1000);
+    </script>
+  </body>
+</html>
