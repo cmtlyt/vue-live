@@ -12,6 +12,7 @@ interface Dep {
 }
 
 interface Sub {
+  tracking: boolean;
   deps: Link | undefined;
   depsTail: Link | undefined;
 }
@@ -94,7 +95,10 @@ export function propagate(subs: Link) {
   let link = subs;
   const queuedEffect = [];
   while (link) {
-    queuedEffect.push(link.sub);
+    const { sub } = link;
+    if (!sub.tracking) {
+      queuedEffect.push(link.sub);
+    }
     link = link.nextSub;
   }
   queuedEffect.forEach(effect => effect.notify());
@@ -104,13 +108,15 @@ export function propagate(subs: Link) {
  * 开启依赖追踪, 将 depsTail 尾节点设置成 undefined
  */
 export function startTrack(sub: ReactiveEffect) {
-  this.depsTail = void 0;
+  sub.tracking = true;
+  sub.depsTail = void 0;
 }
 
 /**
  * 结束追踪, 找到需要清理的依赖, 断开关联关系
  */
 export function endTrack(sub: ReactiveEffect) {
+  sub.tracking = false;
   const depsTail = sub.depsTail;
   /**
    * depsTail 存在, 并且 depsTail 还有 nextDep

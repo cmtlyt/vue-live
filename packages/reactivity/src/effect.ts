@@ -16,6 +16,8 @@ export class ReactiveEffect {
    */
   depsTail: Link | undefined;
 
+  tracking = false;
+
   constructor(public fn: Function) {}
 
   run() {
