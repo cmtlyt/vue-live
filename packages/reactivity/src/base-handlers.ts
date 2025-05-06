@@ -23,13 +23,22 @@ export const mutableHandlers: ProxyHandler<any> = {
     /// 如果原来的值是 ref, 并且新的值不是 ref 则修改老的 ref 的 value
     if (isRef(oldValue) && !isRef(value)) {
       oldValue.value = value;
-      return oldValue.value;
+      return true;
     }
+    /// 处理隐式更新数组的 length
+    const targetIsArray = Array.isArray(target);
+    const oldLength = targetIsArray ? target.length : 0;
     /// 触发更新, get 的时候, 通知之前收集的依赖, 重新执行
     const res = Reflect.set(target, key, value, receiver);
     /// 如果新值和老值不一样, 触发更新
     if (hasChanged(value, oldValue)) {
       trigger(target, key);
+    }
+    /// 处理隐式更新数组的 length
+    const newLength = targetIsArray ? target.length : 0;
+    if (targetIsArray && newLength !== oldLength && key !== 'length') {
+      /// 隐式更新了 length
+      trigger(target, 'length');
     }
     return res;
   },

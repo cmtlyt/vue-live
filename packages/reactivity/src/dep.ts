@@ -42,11 +42,24 @@ export function trigger(target: any, key: any) {
     return;
   }
 
-  const dep = depsMap.get(key);
-  if (!dep) {
-    /// dep 不存在, 表示这个 key 没有在 sub 中访问过
-    return;
+  const targetIsArray = Array.isArray(target);
+  if (targetIsArray && key === 'length') {
+    const length = target.length;
+    depsMap.forEach((dep, depKey) => {
+      if (depKey === 'length' || Number(depKey) >= length) {
+        /// 通知访问了的 effect 更新
+        propagate(dep.subs);
+      }
+    });
+  } else {
+    /// 非数组或者更新的不是 length
+    const dep = depsMap.get(key);
+    if (!dep) {
+      /// dep 不存在, 表示这个 key 没有在 sub 中访问过
+      return;
+    }
+
+    propagate(dep.subs);
   }
 
-  propagate(dep.subs);
 }
