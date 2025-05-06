@@ -1,4 +1,4 @@
-import type { Link } from './system';
+import type { Dependency, Link } from './system';
 import { hasChanged, isObject } from '@vlive/shared';
 import { activeSub } from './effect';
 import { link, propagate } from './system';
@@ -11,7 +11,7 @@ export enum ReactivityFlags {
 /**
  * Ref 实现
  */
-class RefImpl {
+class RefImpl implements Dependency {
   // 保存实际值
   _value: any;
   // 标记为 Ref

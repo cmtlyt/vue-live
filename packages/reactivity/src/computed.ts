@@ -1,4 +1,4 @@
-import { isFunction } from '@vlive/shared';
+import { hasChanged, isFunction } from '@vlive/shared';
 import { ReactivityFlags } from './ref';
 import { Dependency, endTrack, link, Link, startTrack, Sub } from './system';
 import { activeSub, setActiveSub } from './effect';
@@ -15,6 +15,8 @@ export class ComputedRefImpl implements Dependency, Sub {
 
   /** 保存 fn 的返回值 */
   _value: any;
+  /** 计算属性是否被污染 */
+  dirty: boolean = true;
 
   /// Dependency 相关属性
   subs: Link;
@@ -32,7 +34,9 @@ export class ComputedRefImpl implements Dependency, Sub {
   ) {}
 
   get value() {
-    this.update();
+    if (this.dirty) {
+      this.update();
+    }
     /// 和 sub 做关联关系
     if (activeSub) {
       link(this, activeSub);
@@ -54,9 +58,10 @@ export class ComputedRefImpl implements Dependency, Sub {
 
     // 每次执行 fn 之前把 this 放到当前激活的 sub 上
     setActiveSub(this);
-
     startTrack(this);
 
+    // 拿到老值
+    const oldValue = this._value;
     try {
       this._value = this.fn();
     } finally {
@@ -64,6 +69,8 @@ export class ComputedRefImpl implements Dependency, Sub {
       // 执行完之后, 把 activeSub 重置
       setActiveSub(prevSub);
     }
+    // 判断值是否发生变化
+    return hasChanged(this._value, oldValue);
   }
 }
 /**

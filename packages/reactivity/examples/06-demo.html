@@ -16,9 +16,21 @@
        * computed 比较特殊
        * 它既是一个 sub, 又是一个 dep
        */
-      const c = computed(() => count.value + 1);
+      const c = computed(() => {
+        console.count('computed');
+        return count.value * 2;
+      });
+
+      console.debug(1, c.value);
+      console.debug(2, c.value);
+      console.debug(3, c.value);
+      console.debug(4, c.value);
+      console.debug(5, c.value);
+      console.debug(6, c.value);
 
       effect(() => {
+        console.count('effect');
+        c.value;
         console.debug(c.value);
       });
 

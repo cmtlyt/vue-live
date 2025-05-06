@@ -13,6 +13,7 @@ export interface Dependency {
 
 export interface Sub {
   tracking: boolean;
+  dirty: boolean;
   deps: Link | undefined;
   depsTail: Link | undefined;
 }
@@ -89,9 +90,10 @@ export function link(dep: Dependency, sub: Sub) {
 }
 
 function processComputedUpdate(computed: ComputedRefImpl) {
-  /// 更新计算属性
-  computed.update();
-  propagate(computed.subs);
+  /// 更新计算属性 有依赖则更新并且值变化了就触发更新
+  if (computed.subs && computed.update()) {
+    propagate(computed.subs);
+  }
 }
 
 /**
@@ -102,7 +104,8 @@ export function propagate(subs: Link) {
   const queuedEffect = [];
   while (link) {
     const { sub } = link;
-    if (!sub.tracking) {
+    if (!sub.tracking && !sub.dirty) {
+      sub.dirty = true;
       if ('update' in sub) {
         processComputedUpdate(sub as any);
       } else {
@@ -129,6 +132,8 @@ export function startTrack(sub: Sub) {
  */
 export function endTrack(sub: Sub) {
   sub.tracking = false;
+  /// 标记为不脏
+  sub.dirty = false;
   const depsTail = sub.depsTail;
   /**
    * depsTail 存在, 并且 depsTail 还有 nextDep
