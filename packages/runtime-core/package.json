@@ -1,9 +1,9 @@
 {
-  "name": "@vlive/vue",
+  "name": "@vlive/runtime-core",
   "version": "0.0.1",
-  "description": "Vue 核心包",
-  "main": "dist/vue.cjs.js",
-  "module": "dist/vue.esm.js",
+  "description": "浏览器运行时",
+  "main": "dist/runtime-core.cjs.js",
+  "module": "dist/runtime-core.esm.js",
   "files": [
     "dist"
   ],
@@ -11,10 +11,10 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/cmtlyt/vue-live.git",
-    "directory": "packages/vue"
+    "directory": "packages/runtime-core"
   },
   "buildOptions": {
-    "name": "Vue",
+    "name": "RuntimeCore",
     "formats": [
       "esm-builder",
       "esm-browser",
@@ -23,6 +23,7 @@
     ]
   },
   "dependencies": {
-    "@vlive/runtime-dom": "workspace:^"
+    "@vlive/reactivity": "workspace:^",
+    "@vlive/shared": "workspace:^"
   }
 }
