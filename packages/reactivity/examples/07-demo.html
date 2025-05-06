@@ -4,10 +4,47 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
+    <style>
+      #app,
+      #dv {
+        width: 100px;
+        height: 100px;
+        background-color: pink;
+      }
+      #dv {
+        background-color: yellowgreen;
+      }
+    </style>
   </head>
   <body>
     <div id="app"></div>
+    <div id="dv"></div>
+    <button id="btn">change</button>
     <script type="module">
+      import { ref, watch } from '../dist/reactivity.esm.js';
+
+      const flag = ref(true);
+
+      watch(
+        flag,
+        (newValue, _, onCleanup) => {
+          const dom = newValue ? app : dv;
+          const handler = () => {
+            console.debug('点击了', newValue ? 'app' : 'dv');
+          };
+          dom.addEventListener('click', handler);
+          onCleanup(() => {
+            dom.removeEventListener('click', handler);
+          });
+        },
+        { immediate: true },
+      );
+
+      btn.onclick = () => {
+        flag.value = !flag.value;
+      };
+    </script>
+    <!-- <script type="module">
       // import { ref, effect, computed } from 'vue/dist/vue.esm-browser.prod.js';
       import { effect, ref, watch, reactive } from '../dist/reactivity.esm.js';
 
@@ -57,6 +94,6 @@
           state.value.a.b = 2;
         }, 1000);
       }, 1000);
-    </script>
+    </script> -->
   </body>
 </html>

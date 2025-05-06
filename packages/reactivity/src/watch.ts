@@ -44,6 +44,11 @@ export function watch(source: any, cb: Function, options?: WatchOptions) {
   }
 
   let oldValue: any;
+  let cleanup: Function = null;
+
+  const onCleanup = (cb: Function) => {
+    cleanup = cb;
+  };
 
   const effect = new ReactiveEffect(getter);
 
@@ -52,10 +57,15 @@ export function watch(source: any, cb: Function, options?: WatchOptions) {
   };
 
   const job = () => {
+    /// 如果存在则清理上一次的副作用
+    if (cleanup) {
+      cleanup();
+      cleanup = null;
+    }
     // 执行 effect 拿到 getter 返回值, 因为要收集依赖
     const newValue = effect.run();
     // 执行用户回调, 传递新旧值
-    cb(newValue, oldValue);
+    cb(newValue, oldValue, onCleanup);
     oldValue = newValue;
   };
 
