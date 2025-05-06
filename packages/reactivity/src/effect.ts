@@ -22,10 +22,13 @@ export class ReactiveEffect implements Sub {
 
   tracking = false;
   dirty = false;
+  /** effect 是否激活 */
+  active = true;
 
   constructor(public fn: Function) {}
 
   run() {
+    if (!this.active) return this.fn();
     // 保存当前的 sub, 用于处理嵌套逻辑
     const prevSub = activeSub;
 
@@ -55,6 +58,15 @@ export class ReactiveEffect implements Sub {
    */
   scheduler() {
     this.run();
+  }
+
+  stop() {
+    /// 如果激活则清理依赖
+    if (this.active) {
+      startTrack(this);
+      endTrack(this);
+      this.active = false;
+    }
   }
 }
 
