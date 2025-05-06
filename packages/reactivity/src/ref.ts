@@ -77,3 +77,55 @@ export function traggerRef(dep: any) {
     propagate(dep.subs);
   }
 }
+
+class ObjectRefImpl {
+  [ReactivityFlags.IS_REF] = true;
+
+  constructor(
+    public _object: any,
+    public _key: any,
+  ) {}
+
+  get value() {
+    return this._object[this._key];
+  }
+
+  set value(v) {
+    this._object[this._key] = v;
+  }
+}
+
+export function toRef<T>(target: T, key: keyof T) {
+  return new ObjectRefImpl(target, key);
+}
+
+export function toRefs(target: any) {
+  const res = {};
+
+  Object.keys(target).forEach(key => {
+    res[key] = toRef(target, key);
+  });
+
+  return res;
+}
+
+export function unref(value: any) {
+  return isRef(value) ? value.value : value;
+}
+
+export function proxyRefs(target: any) {
+  return new Proxy(target, {
+    get(target, key, receiver) {
+      const res = Reflect.get(target, key, receiver);
+      return unref(res);
+    },
+    set(target, key, value, receiver) {
+      const prop = Reflect.get(target, key, receiver);
+      if (isRef(prop) && !isRef(value)) {
+        prop.value = value;
+        return true;
+      }
+      return Reflect.set(target, key, value, receiver);
+    },
+  });
+}
