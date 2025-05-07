@@ -2,9 +2,6 @@
  * 封装 dom 节点操作 api
  */
 export const nodeOps = {
-  patchProp(...args) {
-    console.debug(args);
-  },
   createElement(type) {
     return document.createElement(type);
   },

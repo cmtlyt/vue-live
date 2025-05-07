@@ -47,6 +47,9 @@ importers:
       '@vlive/runtime-core':
         specifier: workspace:^
         version: link:../runtime-core
+      '@vlive/shared':
+        specifier: workspace:^
+        version: link:../shared
 
   packages/shared: {}
 

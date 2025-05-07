@@ -9,20 +9,34 @@
     <div id="app"></div>
     <script type="module">
       import { h, render, createRenderer } from 'vue/dist/vue.esm-browser.js';
-      import { nodeOps } from '../dist/vue.esm.js';
+      import { renderOptions } from '../dist/vue.esm.js';
 
-      const vnode = h('div', { style: { color: 'red' } }, 'hello world');
+      const vnode = h(
+        'div',
+        {
+          style: {
+            background: 'blue',
+            color: 'white',
+          },
+          id: 'aaa',
+          onClick: () => {
+            console.debug(123);
+          },
+        },
+        'hello world',
+      );
+      const vnode2 = h('div', { style: { color: 'red' }, id: 'bbb' }, 'hello world');
 
       /**
        * runtime-dom -> runtime-core -> reactivity
        */
 
-      const renderer = createRenderer(nodeOps);
+      const renderer = createRenderer(renderOptions);
 
       renderer.render(vnode, app);
 
       setTimeout(() => {
-        renderer.render(null, app);
+        renderer.render(vnode2, app);
       }, 1000);
     </script>
   </body>

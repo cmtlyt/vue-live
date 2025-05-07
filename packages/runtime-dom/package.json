@@ -23,6 +23,7 @@
     ]
   },
   "dependencies": {
-    "@vlive/runtime-core": "workspace:^"
+    "@vlive/runtime-core": "workspace:^",
+    "@vlive/shared": "workspace:^"
   }
 }
