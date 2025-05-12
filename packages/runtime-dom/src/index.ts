@@ -6,4 +6,8 @@ export * from '@vlive/runtime-core';
 
 export const renderOptions = { ...nodeOps, patchProp };
 
-// createRenderer(nodeOps);
+const renderer = createRenderer(renderOptions);
+
+export function render(vnode: any, container: HTMLElement) {
+  renderer.render(vnode, container);
+}

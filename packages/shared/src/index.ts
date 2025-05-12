@@ -19,3 +19,7 @@ export function isFunction(v: any): v is Function {
 export function isOn(key: string) {
   return /^on[A-Z]/.test(key);
 }
+
+export function isArray(value: any): value is any[] {
+  return Array.isArray(value);
+}
