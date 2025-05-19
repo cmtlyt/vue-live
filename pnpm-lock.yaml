@@ -41,6 +41,10 @@ importers:
       '@vlive/shared':
         specifier: workspace:^
         version: link:../shared
+    devDependencies:
+      '@vlive/runtime-dom':
+        specifier: workspace:^
+        version: link:../runtime-dom
 
   packages/runtime-dom:
     dependencies:

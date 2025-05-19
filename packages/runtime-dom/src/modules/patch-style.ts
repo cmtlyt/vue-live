@@ -9,7 +9,7 @@ export function patchStyle(el: HTMLElement, prevV: object, nextV: object) {
 
   if (prevV) {
     for (const key in prevV) {
-      if (!(key in nextV)) style[key] = null;
+      if (!nextV || nextV[key] == null) style[key] = null;
     }
   }
 }

@@ -1,6 +1,6 @@
 import { isArray, isString, ShapeFlags } from '@vlive/shared';
 
-interface VNode {
+export interface VNode {
   __v_isVNode: boolean;
   type: string | ((...args: any[]) => any);
   props: Record<any, any>;
@@ -10,7 +10,7 @@ interface VNode {
   shapeFlag: number;
 }
 
-export function createVNode(type: any, props?: Record<any, any>, children?: any[]) {
+export function createVNode(type: any, props?: Record<any, any>, children: any[] = null) {
   let shapeFlag = 0;
 
   if (isString(type)) {
@@ -40,4 +40,8 @@ export function createVNode(type: any, props?: Record<any, any>, children?: any[
 
 export function isVNode(value: any) {
   return !!(value && value.__v_isVNode);
+}
+
+export function isSameVNodeType(n1: VNode, n2: VNode) {
+  return n1.type === n2.type && n1.key === n2.key;
 }

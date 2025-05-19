@@ -25,5 +25,8 @@
   "dependencies": {
     "@vlive/reactivity": "workspace:^",
     "@vlive/shared": "workspace:^"
+  },
+  "devDependencies": {
+    "@vlive/runtime-dom": "workspace:^"
   }
 }

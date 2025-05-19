@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      .container {
+        min-width: 30px;
+        width: max-content;
+        height: 30px;
+        background-color: pink;
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="box1"></div>
+    <div id="box2"></div>
+    <div id="box3"></div>
+    <div id="box4"></div>
+    <div id="box5"></div>
+    <div id="box6"></div>
+    <div id="box7"></div>
+    <div id="box8"></div>
+    <div id="box9"></div>
+    <div id="box10"></div>
+    <script type="module">
+      import {} from 'vue/dist/vue.esm-browser.js';
+      import { h, render } from '../dist/vue.esm.js';
+
+      const vnode = h('div', 'hello world');
+      const vnode2 = h('div', h('span', 'hello'));
+      const vnode3 = h('div', [h('span', 'hello'), h('span', ' world')]);
+      const vnode4 = h('div', { class: 'container' });
+      const vnode5 = h('div', { class: 'container', style: { color: 'yellow' } }, 'hello');
+      const vnode6 = h('div', { class: 'container' }, 'hello', ' world');
+      const vnode7 = h('div', { class: 'container' }, ['hello', ' world']);
+
+      render(vnode, box1);
+      // render(vnode2, box2);
+      // render(vnode3, box3);
+      // render(vnode4, box4);
+      // render(vnode5, box5);
+      // render(vnode6, box6);
+
+      // render(vnode7, box7);
+
+      setTimeout(() => {
+        const temp = { ...vnode3 };
+        temp.props = { style: { color: 'red' } };
+        render(temp, box1);
+      }, 1000);
+    </script>
+  </body>
+</html>
