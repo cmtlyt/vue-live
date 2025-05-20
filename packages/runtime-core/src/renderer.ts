@@ -27,7 +27,7 @@ export function createRenderer(options: RenderOptions) {
   };
 
   /** 挂载元素 */
-  const mountElement = (vnode: VNode, container: Container) => {
+  const mountElement = (vnode: VNode, container: Container, anchor = null) => {
     const { type, props, children, shapeFlag } = vnode;
     /// 创建 dom 节点
     const el = hostCreateElement(type);
@@ -50,7 +50,7 @@ export function createRenderer(options: RenderOptions) {
       mountChildren(children, el);
     }
 
-    hostInsert(el, container, null);
+    hostInsert(el, container, anchor);
   };
 
   /** 修订属性 */
@@ -68,6 +68,71 @@ export function createRenderer(options: RenderOptions) {
         hostPatchProp(el, key, oldProps[key], newProps[key]);
       }
     }
+  };
+
+  const patchKeyedChildren = (c1: VNode[], c2: VNode[], container: Container) => {
+    /// 1. 双端 diff
+    /** 开始对比的下标 */
+    let i = 0;
+    /** 老的子节点的最后一个元素的下标 */
+    let e1 = c1.length - 1;
+    /** 新的子节点的最后一个元素的下标 */
+    let e2 = c2.length - 1;
+    /**
+     * 1.1 头部对比
+     *
+     * c1 = [a, b]
+     * c2 = [a, b, c]
+     *
+     * 开始 i = 0; e1 = 1; e2 = 2;
+     * 结束 i = 2; e1 = 1; e2 = 2;
+     */
+    while (i <= e1 && i <= e2) {
+      const n1 = c1[i];
+      const n2 = c2[i];
+      if (isSameVNodeType(n1, n2)) {
+        patch(n1, n2, container);
+      } else {
+        break;
+      }
+      ++i;
+    }
+    /**
+     * 1.2 尾部对比
+     *
+     * c1 = [a, b]
+     * c2 = [c, a, b]
+     *
+     * 开始 i = 0; e1 = 1; e2 = 2;
+     * 开始 i = 0; e1 = -1; e2 = 0;
+     */
+    while (i <= e1 && i <= e2) {
+      const n1 = c1[e1];
+      const n2 = c2[e2];
+      if (isSameVNodeType(n1, n2)) {
+        patch(n1, n2, container);
+      } else {
+        break;
+      }
+      --e1;
+      --e2;
+    }
+    if (i > e1) {
+      /// 老的少, 新的多, 挂载新的
+      while (i <= e2) {
+        const nextPos = e2 + 1;
+        const anchor = nextPos < c2.length ? c2[nextPos].el : null;
+        patch(null, c2[i], container, anchor);
+        i++;
+      }
+    } else if (i > e2) {
+      /// 老的多, 新的少, 移除多余, 范围 i...e1
+      while (i <= e1) {
+        unmount(c1[i]);
+        i++;
+      }
+    }
+    console.debug(i, e1, e2);
   };
 
   /** 修订子元素 */
@@ -107,6 +172,7 @@ export function createRenderer(options: RenderOptions) {
           /// 老的是数组
           if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
             /// TODO: 新的是数组, 全量 diff
+            patchKeyedChildren(n1.children, n2.children, el);
           } else {
             /// 新的是 null
             unmountChildren(n1.children);
@@ -139,7 +205,7 @@ export function createRenderer(options: RenderOptions) {
    * @param n1 老节点
    * @param n2 新节点
    */
-  const patch = (n1: VNode, n2: VNode, container: Container) => {
+  const patch = (n1: VNode, n2: VNode, container: Container, anchor = null) => {
     // 如果两次传递的同一个虚拟节点则什么都不干
     if (n1 === n2) return;
     if (n1 && !isSameVNodeType(n1, n2)) {
@@ -149,7 +215,7 @@ export function createRenderer(options: RenderOptions) {
     }
     if (n1 == null) {
       /// 挂载
-      mountElement(n2, container);
+      mountElement(n2, container, anchor);
     } else {
       /// 更新
       patchElement(n1, n2);
