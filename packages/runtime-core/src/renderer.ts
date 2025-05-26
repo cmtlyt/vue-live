@@ -132,6 +132,62 @@ export function createRenderer(options: RenderOptions) {
         i++;
       }
     }
+
+    /// 乱序 diff
+    /**
+     * c1 = [a, b, c, d, e]
+     * c2 = [a, c, d, b, e]
+     *
+     * 双端对比结果
+     *
+     * i = 1, e1 = 3, e2 = 3
+     */
+    /** 老的子节点开始查找的位置 */
+    let s1 = i;
+    /** 新的子节点开始查找的位置 */
+    let s2 = i;
+
+    /**
+     * 新子节点 key 和下标的映射关系
+     *
+     * map = {
+     *   c: 1,
+     *   d: 2,
+     *   b: 3,
+     * }
+     */
+    const keyToNewIndexMap = new Map();
+
+    for (let j = s2; j <= e2; ++j) {
+      const n2 = c2[j];
+      keyToNewIndexMap.set(n2.key, j);
+    }
+
+    for (let j = s1; j <= e1; ++j) {
+      const n1 = c1[j];
+      const newIndex = keyToNewIndexMap.get(n1.key);
+
+      if (newIndex != null) {
+        patch(n1, c2[newIndex], container);
+      } else {
+        unmount(n1);
+      }
+    }
+
+    /// 遍历新子元素, 调整顺序 (倒序插入)
+    for (let j = e2; j >= s2; --j) {
+      const n2 = c2[j];
+      // 拿到下一个子元素
+      const anchor = (c2[j + 1] || {}).el || null;
+
+      if (n2.el) {
+        hostInsert(n2.el, container, anchor);
+      } else {
+        /// 新节点
+        patch(null, n2, container, anchor);
+      }
+    }
+
     console.debug(i, e1, e2);
   };
 
