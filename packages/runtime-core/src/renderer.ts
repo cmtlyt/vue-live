@@ -6,6 +6,70 @@ interface Container extends HTMLElement {
   _vnode?: VNode;
 }
 
+/** 求最长递增子序列 */
+function getSequence(arr: number[]) {
+  const result: number[] = [];
+  // 记录前驱节点
+  const map = new Map();
+
+  for (let i = 0; i < arr.length; ++i) {
+    const item = arr[i];
+
+    // -1 不在计算范围内
+    if (item < 0 || typeof item === 'undefined') {
+      continue;
+    }
+
+    /// 如果 result 里面什么都没有, 就直接放进去
+    if (!result.length) {
+      result.push(i);
+      continue;
+    }
+
+    const lastIndex = result[result.length - 1];
+    const lastItem = arr[lastIndex];
+
+    /// 如果当前项大于上一项, 直接将索引放入 result
+    if (item > lastItem) {
+      result.push(i);
+      map.set(i, lastIndex);
+      continue;
+    }
+
+    /// item 小于上一项, 二分查找最合适的位置替换
+    let left = 0;
+    let right = result.length - 1;
+
+    while (left < right) {
+      const mid = Math.floor((left + right) / 2);
+      const midItem = arr[result[mid]];
+
+      if (midItem < item) {
+        left = mid + 1;
+      } else {
+        right = mid;
+      }
+    }
+
+    if (arr[result[left]] > item) {
+      result[left] = i;
+      map.set(i, map.get(left));
+    }
+  }
+
+  /// 反向追溯
+  let l = result.length;
+  let last = result[l - 1];
+  while (l > 0) {
+    --l;
+    /// 纠正顺序
+    result[l] = last;
+    last = map.get(last);
+  }
+
+  return result;
+}
+
 export function createRenderer(options: RenderOptions) {
   const {
     createElement: hostCreateElement,
@@ -157,22 +221,38 @@ export function createRenderer(options: RenderOptions) {
      * }
      */
     const keyToNewIndexMap = new Map();
+    const newIndexToOldIndexMap = new Array(e2 - s2 + 1).fill(-1);
 
     for (let j = s2; j <= e2; ++j) {
       const n2 = c2[j];
       keyToNewIndexMap.set(n2.key, j);
     }
 
+    let pos = -1;
+    let moved = false;
+
+    /// 遍历老的子节点
     for (let j = s1; j <= e1; ++j) {
       const n1 = c1[j];
       const newIndex = keyToNewIndexMap.get(n1.key);
 
       if (newIndex != null) {
+        /// 判断下标是否连续
+        if (newIndex > pos) {
+          pos = newIndex;
+        } else {
+          moved = true;
+        }
+        newIndexToOldIndexMap[newIndex] = j;
         patch(n1, c2[newIndex], container);
       } else {
         unmount(n1);
       }
     }
+
+    /// 不需要移动则不计算
+    const newIndexSequence = moved ? getSequence(newIndexToOldIndexMap) : [];
+    const sequenceSet = new Set(newIndexSequence);
 
     /// 遍历新子元素, 调整顺序 (倒序插入)
     for (let j = e2; j >= s2; --j) {
@@ -181,7 +261,8 @@ export function createRenderer(options: RenderOptions) {
       const anchor = (c2[j + 1] || {}).el || null;
 
       if (n2.el) {
-        hostInsert(n2.el, container, anchor);
+        /// 如果不在最长递增子序列则需要移动
+        if (moved && !sequenceSet.has(j)) hostInsert(n2.el, container, anchor);
       } else {
         /// 新节点
         patch(null, n2, container, anchor);

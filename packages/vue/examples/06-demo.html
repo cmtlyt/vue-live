@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      .container {
+        min-width: 30px;
+        width: max-content;
+        height: 30px;
+        background-color: pink;
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="box1"></div>
+    <div id="box2"></div>
+    <div id="box3"></div>
+    <div id="box4"></div>
+    <div id="box5"></div>
+    <div id="box6"></div>
+    <div id="box7"></div>
+    <div id="box8"></div>
+    <div id="box9"></div>
+    <div id="box10"></div>
+    <script type="module">
+      import {} from 'vue/dist/vue.esm-browser.js';
+      import { h, render } from '../dist/vue.esm.js';
+
+      // [a, b, c, d, e]
+      const vnode1 = h('div', [
+        h('p', { key: 'a', style: { color: 'blue' } }, 'a'),
+        h('p', { key: 'b', style: { color: 'blue' } }, 'b'),
+        h('p', { key: 'c', style: { color: 'blue' } }, 'c'),
+        h('p', { key: 'd', style: { color: 'blue' } }, 'd'),
+        h('p', { key: 'e', style: { color: 'blue' } }, 'e'),
+      ]);
+      // [a, c, d, b, e]
+      const vnode2 = h('div', [
+        h('p', { key: 'a', style: { color: 'red' } }, 'a'),
+        h('p', { key: 'q', style: { color: 'red' } }, 'q'),
+        h('p', { key: 'b', style: { color: 'red' } }, 'b'),
+        h('p', { key: 'c', style: { color: 'red' } }, 'c'),
+        h('p', { key: 'd', style: { color: 'red' } }, 'd'),
+        h('p', { key: 'w', style: { color: 'red' } }, 'w'),
+        h('p', { key: 'e', style: { color: 'red' } }, 'e'),
+      ]);
+
+      render(vnode1, box1);
+      // render(vnode2, box2);
+      // render(vnode3, box3);
+      // render(vnode4, box4);
+      // render(vnode5, box5);
+      // render(vnode6, box6);
+
+      // render(vnode7, box7);
+
+      setTimeout(() => {
+        render(vnode2, box1);
+      }, 1000);
+    </script>
+  </body>
+</html>
