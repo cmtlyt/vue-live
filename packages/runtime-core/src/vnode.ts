@@ -1,12 +1,15 @@
-import { isArray, isString, ShapeFlags } from '@vlive/shared';
+import { isArray, isNumber, isString, ShapeFlags } from '@vlive/shared';
+
+/** 文本节点标记 */
+export const Text = Symbol('v-txt');
 
 export interface VNode {
   __v_isVNode: boolean;
-  type: string | ((...args: any[]) => any);
+  type: string | symbol | ((...args: any[]) => any);
   props: Record<any, any>;
   children: any[];
   key: any;
-  el: null | HTMLElement;
+  el: null | HTMLElement | Text;
   shapeFlag: number;
 }
 
@@ -44,4 +47,12 @@ export function isVNode(value: any) {
 
 export function isSameVNodeType(n1: VNode, n2: VNode) {
   return n1.type === n2.type && n1.key === n2.key;
+}
+
+export function normalizeVNode(vnode: any) {
+  /// 字符串和数字转换为文本节点
+  if (isString(vnode) || isNumber(vnode)) {
+    return createVNode(Text, null, [String(vnode)]);
+  }
+  return vnode;
 }

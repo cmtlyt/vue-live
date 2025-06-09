@@ -1,8 +1,9 @@
 import type { RenderOptions } from '@vlive/runtime-dom';
-import { isSameVNodeType, type VNode } from './vnode';
+import { isSameVNodeType, normalizeVNode, Text, type VNode } from './vnode';
 import { ShapeFlags } from '@vlive/shared';
+import { createAppAPI } from './api-create-app';
 
-interface Container extends HTMLElement {
+export interface Container extends Element {
   _vnode?: VNode;
 }
 
@@ -76,7 +77,8 @@ export function createRenderer(options: RenderOptions) {
     insert: hostInsert,
     remove: hostRemove,
     setElementText: hostSetElementText,
-    setText: hostText,
+    createText: hostCreateText,
+    setText: hostSetText,
     parentNode: hostParentNode,
     nextSibling: hostNextSibling,
     patchProp: hostPatchProp,
@@ -85,7 +87,8 @@ export function createRenderer(options: RenderOptions) {
   /** 挂载子元素 */
   const mountChildren = (children: VNode[], el: HTMLElement) => {
     for (let i = 0; i < children.length; ++i) {
-      const child = children[i];
+      // 标准化 vnode
+      const child = (children[i] = normalizeVNode(children[i]));
       patch(null, child, el);
     }
   };
@@ -153,7 +156,7 @@ export function createRenderer(options: RenderOptions) {
      */
     while (i <= e1 && i <= e2) {
       const n1 = c1[i];
-      const n2 = c2[i];
+      const n2 = (c2[i] = normalizeVNode(c2[i]));
       if (isSameVNodeType(n1, n2)) {
         patch(n1, n2, container);
       } else {
@@ -172,7 +175,7 @@ export function createRenderer(options: RenderOptions) {
      */
     while (i <= e1 && i <= e2) {
       const n1 = c1[e1];
-      const n2 = c2[e2];
+      const n2 = (c2[e2] = normalizeVNode(c2[e2]));
       if (isSameVNodeType(n1, n2)) {
         patch(n1, n2, container);
       } else {
@@ -186,7 +189,7 @@ export function createRenderer(options: RenderOptions) {
       while (i <= e2) {
         const nextPos = e2 + 1;
         const anchor = nextPos < c2.length ? c2[nextPos].el : null;
-        patch(null, c2[i], container, anchor);
+        patch(null, (c2[i] = normalizeVNode(c2[i])), container, anchor);
         i++;
       }
     } else if (i > e2) {
@@ -224,7 +227,7 @@ export function createRenderer(options: RenderOptions) {
     const newIndexToOldIndexMap = new Array(e2 - s2 + 1).fill(-1);
 
     for (let j = s2; j <= e2; ++j) {
-      const n2 = c2[j];
+      const n2 = (c2[j] = normalizeVNode(c2[j]));
       keyToNewIndexMap.set(n2.key, j);
     }
 
@@ -274,7 +277,7 @@ export function createRenderer(options: RenderOptions) {
 
   /** 修订子元素 */
   const patchChildren = (n1: VNode, n2: VNode) => {
-    const el = n2.el;
+    const el = n2.el as HTMLElement;
     /// 新节点子节点是文本
     ///   老的是数组
     ///   老的是文本
@@ -328,13 +331,52 @@ export function createRenderer(options: RenderOptions) {
   /** 修订元素 */
   const patchElement = (n1: VNode, n2: VNode) => {
     /// 复用 dom 元素
-    const el = (n2.el = n1.el);
+    const el = (n2.el = n1.el) as HTMLElement;
     /// 更新 props
     const oldProps = n1.props;
     const newProps = n2.props;
     patchProps(el, oldProps, newProps);
     /// 更新 children
     patchChildren(n1, n2);
+  };
+
+  /**
+   * 处理 dom 元素
+   * @param n1 老节点
+   * @param n2 新节点
+   * @param container 容器
+   * @param anchor
+   */
+  const processElement = (n1: VNode, n2: VNode, container: Container, anchor = null) => {
+    if (n1 == null) {
+      /// 挂载
+      mountElement(n2, container, anchor);
+    } else {
+      /// 更新
+      patchElement(n1, n2);
+    }
+  };
+
+  /**
+   * 处理文本节点
+   * @param n1
+   * @param n2
+   * @param container
+   * @param anchor
+   */
+  const processText = (n1: VNode, n2: VNode, container: Container, anchor = null) => {
+    if (n1 == null) {
+      const el = hostCreateText(n2.children);
+      n2.el = el;
+      hostInsert(el, container, anchor);
+    } else {
+      // 复用节点
+      const el = (n2.el = n1.el);
+      // 产生变更, 更新文本
+      if (n1.children !== n2.children) {
+        hostSetText(el, n2.children);
+      }
+    }
   };
 
   /**
@@ -350,12 +392,18 @@ export function createRenderer(options: RenderOptions) {
       unmount(n1);
       n1 = null;
     }
-    if (n1 == null) {
-      /// 挂载
-      mountElement(n2, container, anchor);
-    } else {
-      /// 更新
-      patchElement(n1, n2);
+    const { type, shapeFlag } = n2;
+
+    switch (type) {
+      case Text:
+        processText(n1, n2, container, anchor);
+        break;
+      default:
+        if (shapeFlag & ShapeFlags.ELEMENT) {
+          processElement(n1, n2, container, anchor);
+        } else if (shapeFlag & ShapeFlags.COMPONENT) {
+          // TODO: 组件
+        }
     }
   };
 
@@ -390,12 +438,6 @@ export function createRenderer(options: RenderOptions) {
 
   return {
     render,
-    createApp(rootComponent: any) {
-      return {
-        mount(container: Container) {
-          return render(rootComponent, container);
-        },
-      };
-    },
+    createApp: createAppAPI(render),
   };
 }
