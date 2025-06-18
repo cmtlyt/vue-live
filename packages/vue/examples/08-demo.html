@@ -25,13 +25,23 @@
     <div id="box8"></div>
     <div id="box9"></div>
     <div id="box10"></div>
+    <button id="btn">++</button>
     <script type="module">
       import {} from 'vue/dist/vue.esm-browser.js';
-      import { h, createApp } from '../dist/vue.esm.js';
+      import { h, ref, createApp } from '../dist/vue.esm.js';
 
       const Comp = {
-        render(props) {
-          return h('div', null, 'hello', props.name);
+        setup() {
+          const count = ref(0);
+
+          btn.onclick = () => {
+            count.value++;
+          };
+
+          return { count };
+        },
+        render() {
+          return h('div', null, this.count);
         },
       };
 

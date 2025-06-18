@@ -1,7 +1,7 @@
 /**
  * 判断传入值是否为对象
  */
-export function isObject(v: any) {
+export function isObject(v: any): v is object {
   return typeof v === 'object' && v !== null;
 }
 

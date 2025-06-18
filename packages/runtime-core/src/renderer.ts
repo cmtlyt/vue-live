@@ -1,7 +1,8 @@
-import type { RenderOptions } from '@vlive/runtime-dom';
+import { ReactiveEffect, type RenderOptions } from '@vlive/runtime-dom';
 import { isSameVNodeType, normalizeVNode, Text, type VNode } from './vnode';
 import { ShapeFlags } from '@vlive/shared';
 import { createAppAPI } from './api-create-app';
+import { createComponentInstance, setupComponent } from './component';
 
 export interface Container extends Element {
   _vnode?: VNode;
@@ -379,12 +380,51 @@ export function createRenderer(options: RenderOptions) {
     }
   };
 
+  const mountComponent = (vnode: VNode & { type: object }, container: Container, anchor = null) => {
+    // 创建组件实例
+    const instance = createComponentInstance(vnode);
+    // 初始化组件状态
+    setupComponent(instance);
+
+    const componentUpdateFn = () => {
+      if (!instance.isMounted) {
+        // 将组件挂载到页面
+        const subTree = instance.render.call(instance.setupState);
+        patch(null, subTree, container, anchor);
+        // 保存子树
+        instance.subTree = subTree;
+        instance.isMounted = true;
+      } else {
+        const subTree = instance.render.call(instance.setupState);
+        patch(instance.subTree, subTree, container, anchor);
+        // 更新
+        instance.subTree = subTree;
+      }
+    };
+
+    // 创建 effect
+    const effect = new ReactiveEffect(componentUpdateFn);
+    effect.run();
+  };
+
+  /**
+   * 处理组件
+   */
+  const processComponent = (n1: VNode, n2: VNode & { type: object }, container: Container, anchor = null) => {
+    if (n1 == null) {
+      // 挂载
+      mountComponent(n2, container, anchor);
+    } else {
+      // 更新
+    }
+  };
+
   /**
    * 更新和挂载
    * @param n1 老节点
    * @param n2 新节点
    */
-  const patch = (n1: VNode, n2: VNode, container: Container, anchor = null) => {
+  const patch = (n1: VNode, n2: VNode = null, container: Container, anchor = null) => {
     // 如果两次传递的同一个虚拟节点则什么都不干
     if (n1 === n2) return;
     if (n1 && !isSameVNodeType(n1, n2)) {
@@ -402,7 +442,7 @@ export function createRenderer(options: RenderOptions) {
         if (shapeFlag & ShapeFlags.ELEMENT) {
           processElement(n1, n2, container, anchor);
         } else if (shapeFlag & ShapeFlags.COMPONENT) {
-          // TODO: 组件
+          processComponent(n1, n2 as any, container, anchor);
         }
     }
   };

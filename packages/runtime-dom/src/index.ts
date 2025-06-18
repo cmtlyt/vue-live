@@ -23,7 +23,7 @@ export function createApp(rootComponent: any, rootProps: Record<string, any> = n
    */
   const mount = (selector: Element | string) => {
     if (isString(selector)) {
-      selector = document.querySelector('container');
+      selector = document.querySelector(selector);
     }
 
     return app.mount(selector);

@@ -1,5 +1,5 @@
 import { isArray, isObject } from '@vlive/shared';
-import { createVNode, isVNode } from './vnode';
+import { createVNode, isVNode, normalizeVNode } from './vnode';
 
 export function h(type: any, propsOrChildren?: any, children?: any) {
   /// 对 createVNode 参数进行标准化
@@ -15,14 +15,14 @@ export function h(type: any, propsOrChildren?: any, children?: any) {
       }
       return createVNode(type, propsOrChildren);
     }
-    return createVNode(type, null, propsOrChildren);
+    return createVNode(type, null, [propsOrChildren]);
   } else {
     if (l > 3) {
       children = [...arguments].slice(2);
     } else if (isVNode(children)) {
       children = [children];
     }
-    return createVNode(type, propsOrChildren, children);
+    return createVNode(type, propsOrChildren, isArray(children) ? children : [children]);
   }
 
   // const _children = [];

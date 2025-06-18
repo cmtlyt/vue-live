@@ -1,11 +1,16 @@
-import { isArray, isNumber, isString, ShapeFlags } from '@vlive/shared';
+import { isArray, isNumber, isObject, isString, ShapeFlags } from '@vlive/shared';
 
 /** 文本节点标记 */
 export const Text = Symbol('v-txt');
 
+interface ObjType {
+  setup: () => any;
+  render: () => VNode;
+}
+
 export interface VNode {
   __v_isVNode: boolean;
-  type: string | symbol | ((...args: any[]) => any);
+  type: string | symbol | ObjType;
   props: Record<any, any>;
   children: any[];
   key: any;
@@ -13,12 +18,31 @@ export interface VNode {
   shapeFlag: number;
 }
 
+/**
+ * 标准化 children
+ */
+function normalizeChildren(children: any[] = null) {
+  return (
+    children &&
+    children.map(item => {
+      if (isNumber(item)) {
+        return String(item);
+      }
+      return item;
+    })
+  );
+}
+
 export function createVNode(type: any, props?: Record<any, any>, children: any[] = null) {
   let shapeFlag = 0;
+  children = normalizeChildren(children);
 
   if (isString(type)) {
     shapeFlag |= ShapeFlags.ELEMENT;
+  } else if (isObject(type)) {
+    shapeFlag |= ShapeFlags.STATEFUL_COMPONENT;
   }
+
   if (isString(children)) {
     shapeFlag |= ShapeFlags.TEXT_CHILDREN;
   } else if (isArray(children)) {
