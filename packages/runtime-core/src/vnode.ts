@@ -1,10 +1,15 @@
-import { isArray, isNumber, isObject, isString, ShapeFlags } from '@vlive/shared';
+import { isArray, isNumber, isObject, isString, OmitType, ShapeFlags } from '@vlive/shared';
 
 /** 文本节点标记 */
 export const Text = Symbol('v-txt');
 
+export interface SetupContext {
+  attrs: Record<string, any>;
+}
+
 interface ObjType {
-  setup: () => any;
+  props: Record<string, any> | string[];
+  setup: (props: OmitType<ObjType['props'], string[]>, ctx: SetupContext) => any;
   render: () => VNode;
 }
 

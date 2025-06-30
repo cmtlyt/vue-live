@@ -31,3 +31,7 @@ export function isString(value: any): value is string {
 export function isNumber(value: any): value is number {
   return typeof value === 'number';
 }
+
+export function hasOwn(obj: Record<PropertyKey, any>, key: string) {
+  return Object.hasOwn(obj, key);
+}
