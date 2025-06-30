@@ -35,15 +35,30 @@
           msg: String,
         },
         setup(props, { attrs }) {
-          console.debug(props, attrs);
-          return {};
+          const count = ref(0);
+
+          const onClick = (btn.onclick = () => {
+            console.trace('click');
+            count.value++;
+          });
+
+          return () => h('div', { onClick }, count.value);
         },
-        render() {
-          return h('div', null, this.count);
-        },
+        // render() {
+        //   return h(
+        //     'div',
+        //     {
+        //       onClick: () => {
+        //         console.trace('click');
+        //         this.count++;
+        //       },
+        //     },
+        //     this.count,
+        //   );
+        // },
       };
 
-      const app = createApp(Comp, { msg: 'world', count: 0 });
+      const app = createApp(Comp, { msg: 'world' });
 
       app.mount('#box1');
     </script>

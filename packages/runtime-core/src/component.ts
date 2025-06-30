@@ -1,9 +1,13 @@
 import { proxyRefs } from '@vlive/reactivity';
 import { SetupContext, VNode } from './vnode';
 import { initProps, normalizePropsOptions } from './component-props';
-import { isFunction, OmitType } from '@vlive/shared';
+import { hasOwn, isFunction, isObject, OmitType } from '@vlive/shared';
 
 type ComponentVNode = VNode & { type: object };
+
+interface ComponentInstanceCtx {
+  _: ComponentInstance;
+}
 
 export interface ComponentInstance {
   type: ComponentVNode['type'];
@@ -18,6 +22,11 @@ export interface ComponentInstance {
   isMounted: boolean;
   /** setup 函数的返回值 */
   setupState: ReturnType<ComponentVNode['type']['setup']>;
+  proxy: Record<PropertyKey, any>;
+  setupContext: SetupContext;
+  ctx: ComponentInstanceCtx;
+  slots: Record<PropertyKey, any>;
+  refs: Record<PropertyKey, any>;
   /** 渲染虚拟 dom 的方法 */
   render: ComponentVNode['type']['render'];
 }
@@ -33,10 +42,91 @@ export function createComponentInstance(vnode: VNode & { type: object }) {
     subTree: null,
     isMounted: false,
     setupState: null,
-    render: () => null,
+    proxy: {} as ComponentInstance['proxy'],
+    setupContext: {} as ComponentInstance['setupContext'],
+    ctx: {} as ComponentInstance['ctx'],
+    slots: {},
+    refs: {},
+    render: null,
   };
 
+  instance.ctx = { _: instance };
+
   return instance;
+}
+
+const publicPropertiesMap: Record<PropertyKey, (instance: ComponentInstance) => any> = {
+  $attrs: (instance: ComponentInstance) => instance.attrs,
+  $slots: (instance: ComponentInstance) => instance.slots,
+  $refs: (instance: ComponentInstance) => instance.refs,
+  $nextTick: (instance: ComponentInstance) => {
+    // TODO: nextTick
+  },
+};
+
+const publicInstanceProxyHandlers: ProxyHandler<ComponentInstanceCtx> = {
+  get(target, p) {
+    const { _: instance } = target;
+
+    const { setupState, props } = instance;
+
+    // 访问属性先访问 setupState, 然后访问 props
+    if (hasOwn(setupState, p)) {
+      return setupState[p];
+    }
+
+    if (hasOwn(props, p)) {
+      return props[p];
+    }
+
+    // $attrs, $slots, $refs
+    if (hasOwn(publicPropertiesMap, p)) {
+      const publicGetter = publicPropertiesMap[p];
+      return publicGetter(instance);
+    }
+
+    return instance[p];
+  },
+  set(target, p, newValue) {
+    const { _: instance } = target;
+
+    const { setupState } = instance;
+
+    // 修改 setupState
+    if (hasOwn(setupState, p)) {
+      setupState[p] = newValue;
+    }
+
+    return true;
+  },
+};
+
+function handleSetupResult(instance: ComponentInstance, setupResult: ComponentInstance['setupState']) {
+  if (isFunction(setupResult)) {
+    // 如果 setup 返回了函数则认定为是 render
+    instance.render = setupResult;
+  } else if (isObject(setupResult)) {
+    instance.setupState = proxyRefs(setupResult);
+  }
+}
+
+function setupStatefulComponent(instance: ComponentInstance) {
+  const { type } = instance;
+
+  instance.proxy = new Proxy(instance.ctx, publicInstanceProxyHandlers);
+
+  if (isFunction(type.setup)) {
+    const setupContext = createSetupContext(instance);
+    instance.setupContext = setupContext;
+    const setupResult = type.setup(instance.props, setupContext);
+
+    handleSetupResult(instance, setupResult);
+  }
+
+  // 如果处理完了还是没有 render, 则使用组件的 render 属性
+  if (!instance.render) {
+    instance.render = type.render;
+  }
 }
 
 /**
@@ -55,13 +145,5 @@ export function setupComponent(instance: ComponentInstance & { type: object }) {
 
   initProps(instance);
 
-  if (isFunction(type.setup)) {
-    const setupContext = createSetupContext(instance);
-    const setupResult = proxyRefs(type.setup(instance.props, setupContext));
-    instance.setupState = setupResult;
-  }
-
-  console.debug(instance);
-
-  instance.render = type.render;
+  setupStatefulComponent(instance);
 }

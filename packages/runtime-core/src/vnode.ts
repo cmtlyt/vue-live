@@ -4,19 +4,19 @@ import { isArray, isNumber, isObject, isString, OmitType, ShapeFlags } from '@vl
 export const Text = Symbol('v-txt');
 
 export interface SetupContext {
-  attrs: Record<string, any>;
+  attrs: Record<PropertyKey, any>;
 }
 
 interface ObjType {
-  props: Record<string, any> | string[];
-  setup: (props: OmitType<ObjType['props'], string[]>, ctx: SetupContext) => any;
+  props: Record<PropertyKey, any> | string[];
+  setup: (props: OmitType<ObjType['props'], string[]>, ctx: SetupContext) => Record<PropertyKey, any> | (() => VNode);
   render: () => VNode;
 }
 
 export interface VNode {
   __v_isVNode: boolean;
   type: string | symbol | ObjType;
-  props: Record<any, any>;
+  props: Record<PropertyKey, any>;
   children: any[];
   key: any;
   el: null | HTMLElement | Text;

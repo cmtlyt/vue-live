@@ -1,3 +1,5 @@
+import { PickType } from './types';
+
 /**
  * 判断传入值是否为对象
  */
@@ -12,7 +14,7 @@ export function hasChanged(newValue: any, oldValue: any) {
   return !Object.is(newValue, oldValue);
 }
 
-export function isFunction(v: any): v is Function {
+export function isFunction<T>(v: T): v is PickType<T, (...args: any) => any> {
   return typeof v === 'function';
 }
 
@@ -32,6 +34,6 @@ export function isNumber(value: any): value is number {
   return typeof value === 'number';
 }
 
-export function hasOwn(obj: Record<PropertyKey, any>, key: string) {
+export function hasOwn(obj: Record<PropertyKey, any>, key: PropertyKey) {
   return Object.hasOwn(obj, key);
 }

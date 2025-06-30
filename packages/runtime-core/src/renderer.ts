@@ -272,8 +272,6 @@ export function createRenderer(options: RenderOptions) {
         patch(null, n2, container, anchor);
       }
     }
-
-    console.debug(i, e1, e2);
   };
 
   /** 修订子元素 */
@@ -389,13 +387,13 @@ export function createRenderer(options: RenderOptions) {
     const componentUpdateFn = () => {
       if (!instance.isMounted) {
         // 将组件挂载到页面
-        const subTree = instance.render.call(instance.setupState);
+        const subTree = instance.render.call(instance.proxy);
         patch(null, subTree, container, anchor);
         // 保存子树
         instance.subTree = subTree;
         instance.isMounted = true;
       } else {
-        const subTree = instance.render.call(instance.setupState);
+        const subTree = instance.render.call(instance.proxy);
         patch(instance.subTree, subTree, container, anchor);
         // 更新
         instance.subTree = subTree;
