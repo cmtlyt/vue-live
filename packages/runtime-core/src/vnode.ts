@@ -1,4 +1,5 @@
 import { isArray, isNumber, isObject, isString, OmitType, ShapeFlags } from '@vlive/shared';
+import { ComponentInstance } from './component';
 
 /** 文本节点标记 */
 export const Text = Symbol('v-txt');
@@ -16,6 +17,7 @@ interface ObjType {
 export interface VNode {
   __v_isVNode: boolean;
   type: string | symbol | ObjType;
+  component?: ComponentInstance;
   props: Record<PropertyKey, any>;
   children: any[];
   key: any;

@@ -1,9 +1,8 @@
 import { hasOwn, isArray } from '@vlive/shared';
-import { VNode } from './vnode';
-import { ComponentInstance } from './component';
+import { ComponentInstance, ComponentVNode } from './component';
 import { reactive } from '@vlive/reactivity';
 
-export function normalizePropsOptions(props: (VNode & { type: object })['type']['props']): Record<string, any> {
+export function normalizePropsOptions(props: ComponentVNode['type']['props']): Record<PropertyKey, any> {
   if (isArray(props)) {
     return props.reduce((prev, cur) => {
       prev[cur] = {};
@@ -14,11 +13,14 @@ export function normalizePropsOptions(props: (VNode & { type: object })['type'][
   return props;
 }
 
+/**
+ * 设置所有的 props 和 attrs
+ */
 function setFullProps(
   instance: ComponentInstance,
-  rawProps: Record<string, any>,
-  props: Record<string, any>,
-  attrs: Record<string, any>,
+  rawProps: Record<PropertyKey, any>,
+  props: Record<PropertyKey, any>,
+  attrs: Record<PropertyKey, any>,
 ) {
   const { propsOptions } = instance;
   if (rawProps) {
@@ -48,4 +50,25 @@ export function initProps(instance: ComponentInstance) {
   instance.props = reactive(props);
   // attrs 不是响应式
   instance.attrs = attrs;
+}
+
+export function updateProps(instance: ComponentInstance, nextVNode: ComponentVNode) {
+  const { props, attrs } = instance;
+  const rawProps = nextVNode.props;
+
+  setFullProps(instance, rawProps, props, attrs);
+
+  /// 删除之前有现在没有的 props 和 attrs
+
+  for (const key in props) {
+    if (!hasOwn(rawProps, key)) {
+      delete props[key];
+    }
+  }
+
+  for (const key in attrs) {
+    if (!hasOwn(rawProps, key)) {
+      delete props[key];
+    }
+  }
 }

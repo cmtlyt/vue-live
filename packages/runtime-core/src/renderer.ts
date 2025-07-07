@@ -2,8 +2,10 @@ import { ReactiveEffect, type RenderOptions } from '@vlive/runtime-dom';
 import { isSameVNodeType, normalizeVNode, Text, type VNode } from './vnode';
 import { ShapeFlags } from '@vlive/shared';
 import { createAppAPI } from './api-create-app';
-import { ComponentInstance, createComponentInstance, setupComponent } from './component';
+import { ComponentInstance, ComponentVNode, createComponentInstance, setupComponent } from './component';
 import { queueJob } from './scheduler';
+import { shouleUpdateComponent } from './component-render-utils';
+import { updateProps } from './component-props';
 
 export interface Container extends Element {
   _vnode?: VNode;
@@ -379,18 +381,47 @@ export function createRenderer(options: RenderOptions) {
     }
   };
 
+  const updateComponentPreRender = (instance: ComponentInstance, nextVNode: ComponentVNode) => {
+    /// 复用虚拟节点, 并删除更新标识
+    instance.vnode = nextVNode;
+    instance.next = null;
+    /// 更新 props
+    updateProps(instance, nextVNode);
+    /// 更新 slots
+  };
+
   const setupRenderEffect = (instance: ComponentInstance, container: Container, anchor = null) => {
     const componentUpdateFn = () => {
       if (!instance.isMounted) {
-        // 将组件挂载到页面
-        const subTree = instance.render.call(instance.proxy);
+        const { vnode, render } = instance;
+        // 调用 render 拿到 subTree, this 指向 setupState
+        const subTree = render.call(instance.proxy);
+        // 将 subTree 挂载到页面
         patch(null, subTree, container, anchor);
+        // 组件的 vnode 的 el, 会指向 subTree 的 el, 但是他们是相同的
+        vnode.el = subTree.el;
         // 保存子树
         instance.subTree = subTree;
         instance.isMounted = true;
       } else {
-        const subTree = instance.render.call(instance.proxy);
+        let { vnode, next, render } = instance;
+
+        /// 有 next 表示父组件 props 更新触发的更新
+        if (next) {
+          updateComponentPreRender(instance, next);
+        }
+        /// 自身响应式属性触发的更新
+        else {
+          // 如果没有就用之前的
+          next = vnode;
+        }
+
+        // 调用 render 拿到 subTree, this 指向 setupState
+        const subTree = render.call(instance.proxy);
+        // 将 subTree 挂载到页面
         patch(instance.subTree, subTree, container, anchor);
+        // 组件的 vnode 的 el, 会指向 subTree 的 el, 但是他们是相同的
+        next.el = subTree.el;
         // 更新
         instance.subTree = subTree;
       }
@@ -409,24 +440,39 @@ export function createRenderer(options: RenderOptions) {
     update();
   };
 
-  const mountComponent = (vnode: VNode & { type: object }, container: Container, anchor = null) => {
+  const mountComponent = (vnode: ComponentVNode, container: Container, anchor = null) => {
     // 创建组件实例
     const instance = createComponentInstance(vnode);
+    vnode.component = instance;
     // 初始化组件状态
     setupComponent(instance);
 
     setupRenderEffect(instance, container, anchor);
   };
 
+  const updateComponent = (n1: ComponentVNode, n2: ComponentVNode) => {
+    const instance = (n2.component = n1.component);
+    if (shouleUpdateComponent(n1, n2)) {
+      // 绑定新的虚拟节点
+      instance.next = n2;
+      instance.update();
+    } else {
+      /// 没有任何属性发生变化, 不需要更新, 但是需要复用元素, 更新虚拟节点
+      n2.el = n1.el;
+      instance.vnode = n2;
+    }
+  };
+
   /**
    * 处理组件
    */
-  const processComponent = (n1: VNode, n2: VNode & { type: object }, container: Container, anchor = null) => {
+  const processComponent = (n1: ComponentVNode, n2: ComponentVNode, container: Container, anchor = null) => {
     if (n1 == null) {
       // 挂载
       mountComponent(n2, container, anchor);
     } else {
       // 更新
+      updateComponent(n1, n2);
     }
   };
 
@@ -453,7 +499,7 @@ export function createRenderer(options: RenderOptions) {
         if (shapeFlag & ShapeFlags.ELEMENT) {
           processElement(n1, n2, container, anchor);
         } else if (shapeFlag & ShapeFlags.COMPONENT) {
-          processComponent(n1, n2 as any, container, anchor);
+          processComponent(n1 as any, n2 as any, container, anchor);
         }
     }
   };

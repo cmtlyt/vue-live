@@ -4,7 +4,7 @@ import { initProps, normalizePropsOptions } from './component-props';
 import { hasOwn, isFunction, isObject, OmitType } from '@vlive/shared';
 import { nextTick } from './scheduler';
 
-type ComponentVNode = VNode & { type: object };
+export type ComponentVNode = VNode & { type: object };
 
 interface ComponentInstanceCtx {
   _: ComponentInstance;
@@ -28,6 +28,8 @@ export interface ComponentInstance {
   ctx: ComponentInstanceCtx;
   slots: Record<PropertyKey, any>;
   refs: Record<PropertyKey, any>;
+  /** 新的虚拟节点 */
+  next?: ComponentVNode;
   /** 渲染虚拟 dom 的方法 */
   render: ComponentVNode['type']['render'];
   update: () => void;
@@ -59,15 +61,12 @@ export function createComponentInstance(vnode: VNode & { type: object }) {
 }
 
 const publicPropertiesMap: Record<PropertyKey, (instance: ComponentInstance) => any> = {
-  $attrs: (instance: ComponentInstance) => instance.attrs,
-  $slots: (instance: ComponentInstance) => instance.slots,
-  $refs: (instance: ComponentInstance) => instance.refs,
-  $nextTick: (instance: ComponentInstance) => {
-    return nextTick.bind(instance);
-  },
-  $forceUpdate: (instance: ComponentInstance) => {
-    return () => instance.update();
-  },
+  $el: instance => instance.vnode.el,
+  $attrs: instance => instance.attrs,
+  $slots: instance => instance.slots,
+  $refs: instance => instance.refs,
+  $nextTick: instance => nextTick.bind(instance),
+  $forceUpdate: instance => () => instance.update(),
 };
 
 const publicInstanceProxyHandlers: ProxyHandler<ComponentInstanceCtx> = {
