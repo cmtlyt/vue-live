@@ -2,7 +2,8 @@ import { ReactiveEffect, type RenderOptions } from '@vlive/runtime-dom';
 import { isSameVNodeType, normalizeVNode, Text, type VNode } from './vnode';
 import { ShapeFlags } from '@vlive/shared';
 import { createAppAPI } from './api-create-app';
-import { createComponentInstance, setupComponent } from './component';
+import { ComponentInstance, createComponentInstance, setupComponent } from './component';
+import { queueJob } from './scheduler';
 
 export interface Container extends Element {
   _vnode?: VNode;
@@ -378,12 +379,7 @@ export function createRenderer(options: RenderOptions) {
     }
   };
 
-  const mountComponent = (vnode: VNode & { type: object }, container: Container, anchor = null) => {
-    // 创建组件实例
-    const instance = createComponentInstance(vnode);
-    // 初始化组件状态
-    setupComponent(instance);
-
+  const setupRenderEffect = (instance: ComponentInstance, container: Container, anchor = null) => {
     const componentUpdateFn = () => {
       if (!instance.isMounted) {
         // 将组件挂载到页面
@@ -402,7 +398,24 @@ export function createRenderer(options: RenderOptions) {
 
     // 创建 effect
     const effect = new ReactiveEffect(componentUpdateFn);
-    effect.run();
+    const update = effect.run.bind(effect);
+
+    instance.update = update;
+
+    effect.scheduler = () => {
+      queueJob(update);
+    };
+
+    update();
+  };
+
+  const mountComponent = (vnode: VNode & { type: object }, container: Container, anchor = null) => {
+    // 创建组件实例
+    const instance = createComponentInstance(vnode);
+    // 初始化组件状态
+    setupComponent(instance);
+
+    setupRenderEffect(instance, container, anchor);
   };
 
   /**

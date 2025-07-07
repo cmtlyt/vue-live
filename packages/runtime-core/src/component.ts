@@ -2,6 +2,7 @@ import { proxyRefs } from '@vlive/reactivity';
 import { SetupContext, VNode } from './vnode';
 import { initProps, normalizePropsOptions } from './component-props';
 import { hasOwn, isFunction, isObject, OmitType } from '@vlive/shared';
+import { nextTick } from './scheduler';
 
 type ComponentVNode = VNode & { type: object };
 
@@ -29,6 +30,7 @@ export interface ComponentInstance {
   refs: Record<PropertyKey, any>;
   /** 渲染虚拟 dom 的方法 */
   render: ComponentVNode['type']['render'];
+  update: () => void;
 }
 
 export function createComponentInstance(vnode: VNode & { type: object }) {
@@ -48,6 +50,7 @@ export function createComponentInstance(vnode: VNode & { type: object }) {
     slots: {},
     refs: {},
     render: null,
+    update: null,
   };
 
   instance.ctx = { _: instance };
@@ -60,7 +63,10 @@ const publicPropertiesMap: Record<PropertyKey, (instance: ComponentInstance) => 
   $slots: (instance: ComponentInstance) => instance.slots,
   $refs: (instance: ComponentInstance) => instance.refs,
   $nextTick: (instance: ComponentInstance) => {
-    // TODO: nextTick
+    return nextTick.bind(instance);
+  },
+  $forceUpdate: (instance: ComponentInstance) => {
+    return () => instance.update();
   },
 };
 
@@ -105,6 +111,7 @@ function handleSetupResult(instance: ComponentInstance, setupResult: ComponentIn
   if (isFunction(setupResult)) {
     // 如果 setup 返回了函数则认定为是 render
     instance.render = setupResult;
+    instance.setupState = {};
   } else if (isObject(setupResult)) {
     instance.setupState = proxyRefs(setupResult);
   }
