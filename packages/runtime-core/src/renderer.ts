@@ -6,6 +6,7 @@ import { ComponentInstance, ComponentVNode, createComponentInstance, setupCompon
 import { queueJob } from './scheduler';
 import { shouleUpdateComponent } from './component-render-utils';
 import { updateProps } from './component-props';
+import { updateSlots } from './component-slots';
 
 export interface Container extends Element {
   _vnode?: VNode;
@@ -228,7 +229,7 @@ export function createRenderer(options: RenderOptions) {
      * }
      */
     const keyToNewIndexMap = new Map();
-    const newIndexToOldIndexMap = new Array(e2 - s2 + 1).fill(-1);
+    const newIndexToOldIndexMap = new Array(Math.max(0, e2 - s2 + 1)).fill(-1);
 
     for (let j = s2; j <= e2; ++j) {
       const n2 = (c2[j] = normalizeVNode(c2[j]));
@@ -388,6 +389,7 @@ export function createRenderer(options: RenderOptions) {
     /// 更新 props
     updateProps(instance, nextVNode);
     /// 更新 slots
+    updateSlots(instance, nextVNode);
   };
 
   const setupRenderEffect = (instance: ComponentInstance, container: Container, anchor = null) => {

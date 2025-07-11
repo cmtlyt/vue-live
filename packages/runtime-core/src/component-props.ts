@@ -10,7 +10,7 @@ export function normalizePropsOptions(props: ComponentVNode['type']['props']): R
     }, {} as any);
   }
 
-  return props;
+  return props || {};
 }
 
 /**

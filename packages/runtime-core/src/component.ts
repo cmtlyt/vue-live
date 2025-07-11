@@ -3,6 +3,7 @@ import { SetupContext, VNode } from './vnode';
 import { initProps, normalizePropsOptions } from './component-props';
 import { hasOwn, isFunction, isObject, OmitType } from '@vlive/shared';
 import { nextTick } from './scheduler';
+import { initSlots } from './component-slots';
 
 export type ComponentVNode = VNode & { type: object };
 
@@ -26,7 +27,7 @@ export interface ComponentInstance {
   proxy: Record<PropertyKey, any>;
   setupContext: SetupContext;
   ctx: ComponentInstanceCtx;
-  slots: Record<PropertyKey, any>;
+  slots: Record<PropertyKey, () => VNode>;
   refs: Record<PropertyKey, any>;
   /** 新的虚拟节点 */
   next?: ComponentVNode;
@@ -154,9 +155,13 @@ function emit(instance: ComponentInstance, event: string, ...args: any[]) {
  */
 function createSetupContext(instance: ComponentInstance): SetupContext {
   return {
+    // 除了 props 之外的属性
     get attrs() {
       return instance.attrs;
     },
+    // 插槽
+    slots: instance.slots,
+    // 提交事件
     emit(event, ...args) {
       emit(instance, event, ...args);
     },
@@ -166,7 +171,12 @@ function createSetupContext(instance: ComponentInstance): SetupContext {
 export function setupComponent(instance: ComponentInstance & { type: object }) {
   const { type } = instance;
 
+  // 初始化属性
   initProps(instance);
 
+  // 初始化插槽
+  initSlots(instance);
+
+  // 初始化状态
   setupStatefulComponent(instance);
 }

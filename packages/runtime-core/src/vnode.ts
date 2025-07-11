@@ -1,4 +1,4 @@
-import { isArray, isNumber, isObject, isString, OmitType, ShapeFlags } from '@vlive/shared';
+import { isArray, isFunction, isNumber, isObject, isString, OmitType, ShapeFlags } from '@vlive/shared';
 import { ComponentInstance } from './component';
 
 /** 文本节点标记 */
@@ -6,6 +6,7 @@ export const Text = Symbol('v-txt');
 
 export interface SetupContext {
   attrs: Record<PropertyKey, any>;
+  slots: Record<PropertyKey, () => VNode>;
   emit: (event: string, ...args: any[]) => void;
 }
 
@@ -29,21 +30,34 @@ export interface VNode {
 /**
  * 标准化 children
  */
-function normalizeChildren(children: any[] = null) {
-  return (
-    children &&
-    children.map(item => {
-      if (isNumber(item)) {
-        return String(item);
-      }
-      return item;
-    })
-  );
+function normalizeChildren(vnode: VNode, children = null) {
+  let { shapeFlag } = vnode;
+
+  if (isString(children) || isNumber(children)) {
+    shapeFlag |= ShapeFlags.TEXT_CHILDREN;
+    children = String(children);
+  } else if (isArray(children)) {
+    shapeFlag |= ShapeFlags.ARRAY_CHILDREN;
+    children = children.filter(item => item != null);
+  } else if (isFunction(children)) {
+    if (shapeFlag & ShapeFlags.COMPONENT) {
+      shapeFlag |= ShapeFlags.SLOTS_CHILDREN;
+      children = { default: children };
+    }
+  } else if (isObject(children)) {
+    if (shapeFlag & ShapeFlags.COMPONENT) {
+      shapeFlag |= ShapeFlags.SLOTS_CHILDREN;
+    }
+  }
+
+  vnode.children = children;
+  vnode.shapeFlag = shapeFlag;
+
+  return children;
 }
 
-export function createVNode(type: any, props?: Record<any, any>, children: any[] = null) {
+export function createVNode(type: any, props?: Record<any, any>, children = null) {
   let shapeFlag = 0;
-  children = normalizeChildren(children);
 
   if (isString(type)) {
     shapeFlag |= ShapeFlags.ELEMENT;
@@ -51,18 +65,12 @@ export function createVNode(type: any, props?: Record<any, any>, children: any[]
     shapeFlag |= ShapeFlags.STATEFUL_COMPONENT;
   }
 
-  if (isString(children)) {
-    shapeFlag |= ShapeFlags.TEXT_CHILDREN;
-  } else if (isArray(children)) {
-    shapeFlag |= ShapeFlags.ARRAY_CHILDREN;
-  }
-
   const vnode: VNode = {
     /** 是一个虚拟节点 */
     __v_isVNode: true,
     type,
     props,
-    children,
+    children: null,
     /** 做 diff 用的 */
     key: (props || {}).key,
     /** 虚拟节点要挂载的元素 */
@@ -70,6 +78,9 @@ export function createVNode(type: any, props?: Record<any, any>, children: any[]
     /** 如果是 9 表示 type 是 dom 元素, children 是字符串 */
     shapeFlag,
   };
+
+  normalizeChildren(vnode, children);
+
   return vnode;
 }
 
