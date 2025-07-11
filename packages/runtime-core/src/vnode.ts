@@ -6,6 +6,7 @@ export const Text = Symbol('v-txt');
 
 export interface SetupContext {
   attrs: Record<PropertyKey, any>;
+  emit: (event: string, ...args: any[]) => void;
 }
 
 interface ObjType {

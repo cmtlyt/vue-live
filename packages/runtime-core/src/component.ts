@@ -33,6 +33,7 @@ export interface ComponentInstance {
   /** 渲染虚拟 dom 的方法 */
   render: ComponentVNode['type']['render'];
   update: () => void;
+  emit: SetupContext['emit'];
 }
 
 export function createComponentInstance(vnode: VNode & { type: object }) {
@@ -53,9 +54,11 @@ export function createComponentInstance(vnode: VNode & { type: object }) {
     refs: {},
     render: null,
     update: null,
+    emit: null,
   };
 
   instance.ctx = { _: instance };
+  instance.emit = (event, ...args) => emit(instance, event, ...args);
 
   return instance;
 }
@@ -67,6 +70,7 @@ const publicPropertiesMap: Record<PropertyKey, (instance: ComponentInstance) => 
   $refs: instance => instance.refs,
   $nextTick: instance => nextTick.bind(instance),
   $forceUpdate: instance => () => instance.update(),
+  $emit: instance => instance.emit,
 };
 
 const publicInstanceProxyHandlers: ProxyHandler<ComponentInstanceCtx> = {
@@ -135,6 +139,16 @@ function setupStatefulComponent(instance: ComponentInstance) {
   }
 }
 
+function emit(instance: ComponentInstance, event: string, ...args: any[]) {
+  const eventName = `on${event[0].toUpperCase()}${event.slice(1)}`;
+
+  const handler = instance.vnode.props[eventName];
+
+  if (isFunction(handler)) {
+    handler(...args);
+  }
+}
+
 /**
  * 创建 setupContext
  */
@@ -142,6 +156,9 @@ function createSetupContext(instance: ComponentInstance): SetupContext {
   return {
     get attrs() {
       return instance.attrs;
+    },
+    emit(event, ...args) {
+      emit(instance, event, ...args);
     },
   };
 }
