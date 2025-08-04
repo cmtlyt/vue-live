@@ -4,3 +4,4 @@ export * from './h';
 export * from './vnode';
 export * from './scheduler';
 export * from './component';
+export * from './api-lifecycle';

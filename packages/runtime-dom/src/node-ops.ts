@@ -12,7 +12,7 @@ export const nodeOps = {
     parent.insertBefore(el, anchor);
   },
   remove(el) {
-    const parentNode = el.parentNode;
+    const parentNode = (el || {}).parentNode;
     if (parentNode) {
       parentNode.removeChild(el);
     }

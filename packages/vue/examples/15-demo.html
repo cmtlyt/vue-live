@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      .container {
+        min-width: 30px;
+        width: max-content;
+        height: 30px;
+        background-color: pink;
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="box1"></div>
+    <div id="box2"></div>
+    <div id="box3"></div>
+    <div id="box4"></div>
+    <div id="box5"></div>
+    <div id="box6"></div>
+    <div id="box7"></div>
+    <div id="box8"></div>
+    <div id="box9"></div>
+    <div id="box10"></div>
+    <button id="btn">++</button>
+    <script type="module">
+      // import {
+      //   h,
+      //   ref,
+      //   createApp,
+      //   nextTick,
+      //   getCurrentInstance,
+      //   onMounted,
+      //   onBeforeMount,
+      //   onBeforeUpdate,
+      //   onUpdated,
+      //   onBeforeUnmount,
+      //   onUnmounted,
+      // } from 'vue/dist/vue.esm-browser.js';
+      import {
+        h,
+        ref,
+        createApp,
+        nextTick,
+        getCurrentInstance,
+        onMounted,
+        onBeforeMount,
+        onBeforeUpdate,
+        onUpdated,
+        onBeforeUnmount,
+        onUnmounted,
+      } from '../dist/vue.esm.js';
+
+      const Child = {
+        props: ['age', 'name'],
+        setup(props, { attrs, emit, slots }) {
+          onBeforeMount(() => {
+            console.debug(`before mount ${props.name}`);
+          });
+
+          onMounted(() => {
+            console.debug(`mounted1 ${props.name}`, document.querySelector('#p-test'));
+          });
+
+          onMounted(() => {
+            console.debug(`mounted2 ${props.name}`, document.querySelector('#default-slot'));
+          });
+
+          onBeforeUpdate(() => {
+            console.debug(`before update ${props.name}`);
+          });
+
+          onUpdated(() => {
+            console.debug(`updated ${props.name}`);
+          });
+
+          onBeforeUnmount(() => {
+            console.debug(`before unmount ${props.name}`);
+          });
+
+          onUnmounted(() => {
+            console.debug(`unmouted ${props.name}`);
+          });
+
+          return () => {
+            return h(
+              'div',
+              {
+                onClick() {
+                  emit('foo', 1, 2, 3);
+                },
+              },
+              [
+                slots.header?.(),
+                '我是子组件',
+                slots.default?.(),
+                '我的年龄是:',
+                props.age.value,
+                slots.footer?.({ a: 123 }),
+              ],
+            );
+          };
+        },
+      };
+
+      /**
+       * 挂载
+       * onBeforeMount
+       * onMounted
+       *
+       * 更新
+       * onBeforeUpdate
+       * onUpdated
+       *
+       * 卸载
+       * onBeforeUnmount
+       * onUnmounted
+       */
+      const Comp = {
+        props: {
+          msg: String,
+        },
+        setup(props, { attrs }) {
+          const count = ref(0);
+          const msg = ref('');
+
+          const vm = getCurrentInstance();
+          console.debug(vm);
+
+          onBeforeMount(() => {
+            const vm = getCurrentInstance();
+            console.debug('before mount', vm);
+          });
+
+          onMounted(() => {
+            console.debug('mounted1', document.querySelector('#p-test'));
+          });
+
+          onMounted(() => {
+            console.debug('mounted2', document.querySelector('#default-slot'));
+          });
+
+          onBeforeUpdate(() => {
+            console.debug('before update');
+          });
+
+          onUpdated(() => {
+            console.debug('updated');
+          });
+
+          onBeforeUnmount(() => {
+            console.debug('before unmount');
+          });
+
+          onUnmounted(() => {
+            console.debug('unmouted');
+          });
+
+          const onClick = (btn.onclick = (...args) => {
+            console.debug(args);
+            console.trace('click');
+            count.value++;
+            count.value++;
+            count.value++;
+            msg.value = count.value.toString();
+          });
+
+          return function () {
+            return h('div', null, [
+              'count:',
+              count.value,
+              h('p', { id: 'p-test' }, '父组件的 p 标签'),
+              h(
+                Child,
+                { age: count, name: 'child1' },
+                {
+                  // 具名插槽
+                  header: () => h('div', '父组件传递的插槽 header'),
+                  // 默认插槽
+                  default: () => h('div', '父组件传递的默认插槽'),
+                  // 作用于插槽
+                  footer: ({ a }) => h('div', `父组件传递的插槽 footer, 接收参数: ${a}`),
+                },
+              ),
+              h(Child, { age: 0, name: 'child2', onFoo: onClick }, () => {
+                console.debug('default-slot mount');
+                return h('div', { id: 'default-slot' }, '父组件传递的默认插槽');
+              }),
+            ]);
+          };
+        },
+      };
+
+      const app = createApp(Comp, { msg: 'world' });
+
+      app.mount('#box1');
+
+      // setTimeout(() => {
+      //   app.unmount();
+      // }, 2000);
+    </script>
+  </body>
+</html>

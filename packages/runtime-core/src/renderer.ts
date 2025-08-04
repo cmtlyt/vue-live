@@ -1,4 +1,4 @@
-import { ReactiveEffect, type RenderOptions } from '@vlive/runtime-dom';
+import { LifecycleHooks, ReactiveEffect, triggerHooks, type RenderOptions } from '@vlive/runtime-dom';
 import { isSameVNodeType, normalizeVNode, Text, type VNode } from './vnode';
 import { ShapeFlags } from '@vlive/shared';
 import { createAppAPI } from './api-create-app';
@@ -113,6 +113,8 @@ export function createRenderer(options: RenderOptions) {
       }
     }
 
+    hostInsert(el, container, anchor);
+
     /// 挂载子节点
     if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
       /// 子节点是文本
@@ -121,8 +123,6 @@ export function createRenderer(options: RenderOptions) {
       /// 子节点是数组
       mountChildren(children, el);
     }
-
-    hostInsert(el, container, anchor);
   };
 
   /** 修订属性 */
@@ -396,6 +396,8 @@ export function createRenderer(options: RenderOptions) {
     const componentUpdateFn = () => {
       if (!instance.isMounted) {
         const { vnode, render } = instance;
+        // 挂载前 beforeMounte
+        triggerHooks(instance, LifecycleHooks.BEFORE_MOUNT);
         // 调用 render 拿到 subTree, this 指向 setupState
         const subTree = render.call(instance.proxy);
         // 将 subTree 挂载到页面
@@ -405,6 +407,8 @@ export function createRenderer(options: RenderOptions) {
         // 保存子树
         instance.subTree = subTree;
         instance.isMounted = true;
+        // 挂载完成
+        triggerHooks(instance, LifecycleHooks.MOUNTED);
       } else {
         let { vnode, next, render } = instance;
 
@@ -418,6 +422,9 @@ export function createRenderer(options: RenderOptions) {
           next = vnode;
         }
 
+        // 更新前
+        triggerHooks(instance, LifecycleHooks.BEFORE_UPDATE);
+
         // 调用 render 拿到 subTree, this 指向 setupState
         const subTree = render.call(instance.proxy);
         // 将 subTree 挂载到页面
@@ -426,6 +433,9 @@ export function createRenderer(options: RenderOptions) {
         next.el = subTree.el;
         // 更新
         instance.subTree = subTree;
+
+        // 更新完成
+        triggerHooks(instance, LifecycleHooks.UPDATED);
       }
     };
 
@@ -513,9 +523,26 @@ export function createRenderer(options: RenderOptions) {
     }
   };
 
+  const unmountComponent = (instance: ComponentInstance) => {
+    // 卸载前
+    triggerHooks(instance, LifecycleHooks.BEFORE_UNMOUNTE);
+
+    // 卸载子树
+    unmount(instance.subTree);
+
+    // 卸载完成
+    triggerHooks(instance, LifecycleHooks.UNMOUNTED);
+  };
+
   /** 卸载元素 */
   const unmount = (vnode: VNode) => {
     const { type, shapeFlag, children } = vnode;
+
+    // 组件卸载
+    if (shapeFlag & ShapeFlags.COMPONENT) {
+      unmountComponent(vnode.component);
+    }
+
     if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
       unmountChildren(children);
     }
