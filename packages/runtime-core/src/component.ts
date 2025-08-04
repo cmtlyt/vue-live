@@ -129,7 +129,14 @@ function setupStatefulComponent(instance: ComponentInstance) {
   if (isFunction(type.setup)) {
     const setupContext = createSetupContext(instance);
     instance.setupContext = setupContext;
+
+    // 设置当前组件实例
+    setCurrentInstance(instance);
+
     const setupResult = type.setup(instance.props, setupContext);
+
+    // 清除当前组件实例
+    unsetCurrentInstance();
 
     handleSetupResult(instance, setupResult);
   }
@@ -179,4 +186,18 @@ export function setupComponent(instance: ComponentInstance & { type: object }) {
 
   // 初始化状态
   setupStatefulComponent(instance);
+}
+
+let currentInstance: ComponentInstance | null = null;
+
+export function setCurrentInstance(instance: ComponentInstance) {
+  currentInstance = instance;
+}
+
+export function getCurrentInstance() {
+  return currentInstance || null;
+}
+
+export function unsetCurrentInstance() {
+  currentInstance = null;
 }

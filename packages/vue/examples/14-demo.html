@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      .container {
+        min-width: 30px;
+        width: max-content;
+        height: 30px;
+        background-color: pink;
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="box1"></div>
+    <div id="box2"></div>
+    <div id="box3"></div>
+    <div id="box4"></div>
+    <div id="box5"></div>
+    <div id="box6"></div>
+    <div id="box7"></div>
+    <div id="box8"></div>
+    <div id="box9"></div>
+    <div id="box10"></div>
+    <button id="btn">++</button>
+    <script type="module">
+      import {} from 'vue/dist/vue.esm-browser.js';
+      import { h, ref, createApp, getCurrentInstance, nextTick } from '../dist/vue.esm.js';
+
+      const Child = {
+        props: ['age'],
+        setup(props, { attrs, emit, slots }) {
+          return () => {
+            return h(
+              'div',
+              {
+                onClick() {
+                  emit('foo', 1, 2, 3);
+                },
+              },
+              [slots.header?.(), '我是子组件', slots.default?.(), '我的年龄是:', props.age, slots.footer?.({ a: 123 })],
+            );
+          };
+        },
+      };
+
+      const Comp = {
+        props: {
+          msg: String,
+        },
+        setup(props, { attrs }) {
+          const count = ref(0);
+          const msg = ref('');
+
+          const vm = getCurrentInstance();
+          console.debug(vm);
+
+          const onClick = (btn.onclick = (...args) => {
+            console.debug(args);
+            console.trace('click');
+            count.value++;
+            count.value++;
+            count.value++;
+            msg.value = count.value.toString();
+          });
+
+          return function () {
+            return h('div', null, [
+              'count:',
+              count.value,
+              h(
+                Child,
+                { age: 0 },
+                {
+                  // 具名插槽
+                  header: () => h('div', '父组件传递的插槽 header'),
+                  // 默认插槽
+                  default: () => h('div', '父组件传递的默认插槽'),
+                  // 作用于插槽
+                  footer: ({ a }) => h('div', `父组件传递的插槽 footer, 接收参数: ${a}`),
+                },
+              ),
+              h(Child, { age: 0, onFoo: onClick }, () => h('div', '父组件传递的默认插槽')),
+            ]);
+          };
+        },
+        // render() {
+        //   return h(
+        //     'div',
+        //     {
+        //       onClick: () => {
+        //         console.trace('click');
+        //         this.count++;
+        //       },
+        //     },
+        //     this.count,
+        //   );
+        // },
+      };
+
+      const app = createApp(Comp, { msg: 'world' });
+
+      app.mount('#box1');
+    </script>
+  </body>
+</html>
