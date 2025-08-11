@@ -58,6 +58,10 @@
       const Child = {
         props: ['age', 'name'],
         setup(props, { attrs, emit, slots, expose }) {
+          const vm = getCurrentInstance();
+
+          console.debug('vm.parent ===>', vm, vm.parent);
+
           /**
            * 手动调用, 只能获取到 传入的属性和 $el, $props, $attrs, $slots
            *
@@ -104,7 +108,8 @@
        * onBeforeUnmount
        * onUnmounted
        */
-      const Comp = {
+      const App = {
+        name: 'App',
         props: {
           msg: String,
         },
@@ -171,7 +176,7 @@
         },
       };
 
-      const app = createApp(Comp, { msg: 'world' });
+      const app = createApp(App, { msg: 'world' });
 
       app.mount('#box1');
 

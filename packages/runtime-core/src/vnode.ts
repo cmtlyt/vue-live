@@ -19,6 +19,7 @@ interface ObjType {
 
 export interface VNode {
   __v_isVNode: boolean;
+  appContext: Record<PropertyKey, any>;
   type: string | symbol | ObjType;
   component?: ComponentInstance;
   props: Record<PropertyKey, any>;
@@ -78,6 +79,7 @@ export function createVNode(type: any, props?: Record<any, any>, children = null
   const vnode: VNode = {
     /** 是一个虚拟节点 */
     __v_isVNode: true,
+    appContext: null,
     type,
     props,
     children: null,

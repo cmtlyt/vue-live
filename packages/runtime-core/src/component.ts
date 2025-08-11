@@ -14,6 +14,8 @@ interface ComponentInstanceCtx {
 export interface ComponentInstance {
   type: ComponentVNode['type'];
   vnode: ComponentVNode;
+  /** createApp 产生的 appContext */
+  appContext: Record<PropertyKey, any>;
   /** 用户声明的组件 props */
   propsOptions: OmitType<ComponentVNode['type']['props'], string[]>;
   props: ComponentVNode['props'];
@@ -38,6 +40,7 @@ export interface ComponentInstance {
   emit: SetupContext['emit'];
   /** 暴露的属性 */
   exposed?: Record<PropertyKey, any>;
+  parent: ComponentInstance;
 }
 
 export function getComponentPublicInstance(instance: ComponentInstance) {
@@ -59,11 +62,16 @@ export function getComponentPublicInstance(instance: ComponentInstance) {
   }
 }
 
-export function createComponentInstance(vnode: VNode & { type: object }) {
+export function createComponentInstance(vnode: VNode & { type: object }, parent: ComponentInstance = null) {
   const { type } = vnode;
+
+  /** 如果 parent 不存在, 则从 vnode 中直接获取 appContext */
+  const appContext = (parent || vnode || {}).appContext || null;
+
   const instance: ComponentInstance = {
     type,
     vnode,
+    appContext,
     propsOptions: normalizePropsOptions(type.props),
     props: {},
     attrs: {},
@@ -78,6 +86,7 @@ export function createComponentInstance(vnode: VNode & { type: object }) {
     render: null,
     update: null,
     emit: null,
+    parent,
   };
 
   instance.ctx = { _: instance };
