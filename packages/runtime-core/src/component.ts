@@ -25,6 +25,7 @@ export interface ComponentInstance {
   /** setup 函数的返回值 */
   setupState: ReturnType<ComponentVNode['type']['setup']>;
   proxy: Record<PropertyKey, any>;
+  exposedProxy?: Record<PropertyKey, any>;
   setupContext: SetupContext;
   ctx: ComponentInstanceCtx;
   slots: Record<PropertyKey, () => VNode>;
@@ -35,6 +36,27 @@ export interface ComponentInstance {
   render: ComponentVNode['type']['render'];
   update: () => void;
   emit: SetupContext['emit'];
+  /** 暴露的属性 */
+  exposed?: Record<PropertyKey, any>;
+}
+
+export function getComponentPublicInstance(instance: ComponentInstance) {
+  if (instance.exposed) {
+    instance.exposedProxy ||= new Proxy(proxyRefs(instance.exposed), {
+      get(target, p, receiver) {
+        if (p in target) {
+          return Reflect.get(target, p, receiver);
+        }
+        if (p in publicPropertiesMap) {
+          return publicPropertiesMap[p](instance);
+        }
+      },
+    });
+
+    return instance.exposedProxy;
+  } else {
+    return instance.proxy;
+  }
 }
 
 export function createComponentInstance(vnode: VNode & { type: object }) {
@@ -172,6 +194,10 @@ function createSetupContext(instance: ComponentInstance): SetupContext {
     emit(event, ...args) {
       emit(instance, event, ...args);
     },
+    // 暴露属性
+    expose(exposed) {
+      instance.exposed = exposed;
+    },
   };
 }
 
@@ -200,4 +226,19 @@ export function getCurrentInstance() {
 
 export function unsetCurrentInstance() {
   currentInstance = null;
+}
+
+/** 当前正在渲染的组件实例 */
+let currentRenderingInstance = null;
+
+export function setCurrentRenderingInstance(instance: ComponentInstance) {
+  currentRenderingInstance = instance;
+}
+
+export function unsetCurrentRenderingInstance() {
+  currentRenderingInstance = null;
+}
+
+export function getCurrentRenderingInstance(): ComponentInstance {
+  return currentRenderingInstance;
 }

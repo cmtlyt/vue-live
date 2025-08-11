@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      .container {
+        min-width: 30px;
+        width: max-content;
+        height: 30px;
+        background-color: pink;
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="box1"></div>
+    <div id="box2"></div>
+    <div id="box3"></div>
+    <div id="box4"></div>
+    <div id="box5"></div>
+    <div id="box6"></div>
+    <div id="box7"></div>
+    <div id="box8"></div>
+    <div id="box9"></div>
+    <div id="box10"></div>
+    <button id="btn">++</button>
+    <script type="module">
+      // import {
+      //   h,
+      //   ref,
+      //   createApp,
+      //   nextTick,
+      //   getCurrentInstance,
+      //   onMounted,
+      //   onBeforeMount,
+      //   onBeforeUpdate,
+      //   onUpdated,
+      //   onBeforeUnmount,
+      //   onUnmounted,
+      // } from 'vue/dist/vue.esm-browser.js';
+      import {
+        h,
+        ref,
+        createApp,
+        nextTick,
+        getCurrentInstance,
+        onMounted,
+        onBeforeMount,
+        onBeforeUpdate,
+        useTemplateRef,
+        onUpdated,
+        onBeforeUnmount,
+        onUnmounted,
+      } from '../dist/vue.esm.js';
+
+      const Child = {
+        props: ['age', 'name'],
+        setup(props, { attrs, emit, slots, expose }) {
+          /**
+           * 手动调用, 只能获取到 传入的属性和 $el, $props, $attrs, $slots
+           *
+           * 如果用户没有调用, 那么父组件可以获取到子组件的 instance.proxy
+           */
+          expose({
+            a: ref('child ref a'),
+            foo() {
+              console.debug('子组件暴露 foo');
+            },
+          });
+
+          return () => {
+            return h(
+              'div',
+              {
+                onClick() {
+                  emit('foo', 1, 2, 3);
+                },
+              },
+              [
+                slots.header?.(),
+                '我是子组件',
+                slots.default?.(),
+                '我的年龄是:',
+                props.age.value,
+                slots.footer?.({ a: 123 }),
+              ],
+            );
+          };
+        },
+      };
+
+      /**
+       * 挂载
+       * onBeforeMount
+       * onMounted
+       *
+       * 更新
+       * onBeforeUpdate
+       * onUpdated
+       *
+       * 卸载
+       * onBeforeUnmount
+       * onUnmounted
+       */
+      const Comp = {
+        props: {
+          msg: String,
+        },
+        setup(props, { attrs }) {
+          const count = ref(0);
+          const msg = ref('');
+          const elRef = ref();
+          const childRef = ref();
+          const childRef2 = useTemplateRef('childRef2');
+
+          const vm = getCurrentInstance();
+          console.debug(vm);
+          const onClick = (btn.onclick = (...args) => {
+            console.debug(args);
+            console.trace('click');
+            count.value++;
+            count.value++;
+            count.value++;
+            msg.value = count.value.toString();
+          });
+
+          onMounted(() => {
+            console.debug('elRef', elRef.value);
+            console.debug('childRef', childRef.value);
+            console.debug('childRef', childRef.value.a);
+            console.debug('childRef2', vm.proxy.$refs);
+            console.debug('useTemplateRef childRef2', childRef2.value, childRef2.value === vm.proxy.$refs.childRef2);
+          });
+
+          const flag = ref(true);
+
+          setTimeout(() => {
+            flag.value = false;
+            console.debug('set flag false');
+            vm.proxy.$nextTick(() => {
+              console.debug(vm.proxy.$refs);
+            });
+          }, 3000);
+
+          return function () {
+            return h('div', { ref: 'divRef' }, [
+              'count:',
+              count.value,
+              h('p', { id: 'p-test', ref: elRef }, '父组件的 p 标签'),
+              h(
+                Child,
+                { age: count, name: 'child1', ref: childRef },
+                {
+                  // 具名插槽
+                  header: () => h('div', '父组件传递的插槽 header'),
+                  // 默认插槽
+                  default: () => h('div', '父组件传递的默认插槽'),
+                  // 作用于插槽
+                  footer: ({ a }) => h('div', `父组件传递的插槽 footer, 接收参数: ${a}`),
+                },
+              ),
+              flag.value &&
+                h(Child, { age: 0, name: 'child2', ref: 'childRef2', onFoo: onClick }, () => {
+                  console.debug('default-slot mount');
+                  return h('div', { id: 'default-slot' }, '父组件传递的默认插槽');
+                }),
+            ]);
+          };
+        },
+      };
+
+      const app = createApp(Comp, { msg: 'world' });
+
+      app.mount('#box1');
+
+      // setTimeout(() => {
+      //   app.unmount();
+      // }, 2000);
+    </script>
+  </body>
+</html>

@@ -1,4 +1,4 @@
-import { ComponentVNode } from './component';
+import { ComponentInstance, ComponentVNode, setCurrentRenderingInstance, unsetCurrentInstance } from './component';
 
 function hasPropsChanged(prevProps: Record<PropertyKey, any>, nextProps: Record<PropertyKey, any>) {
   const nextKeys = Object.keys(nextProps);
@@ -38,4 +38,11 @@ export function shouleUpdateComponent(n1: ComponentVNode, n2: ComponentVNode) {
 
   /// 老的有 新的也有
   return hasPropsChanged(prevProps, nextProps);
+}
+
+export function renderComponentRoot(instance: ComponentInstance) {
+  setCurrentRenderingInstance(instance);
+  const subTree = instance.render.call(instance.proxy);
+  unsetCurrentInstance();
+  return subTree;
 }

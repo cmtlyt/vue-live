@@ -1,5 +1,5 @@
 import { isArray, isFunction, isNumber, isObject, isString, OmitType, ShapeFlags } from '@vlive/shared';
-import { ComponentInstance } from './component';
+import { ComponentInstance, getCurrentRenderingInstance } from './component';
 
 /** 文本节点标记 */
 export const Text = Symbol('v-txt');
@@ -8,6 +8,7 @@ export interface SetupContext {
   attrs: Record<PropertyKey, any>;
   slots: Record<PropertyKey, () => VNode>;
   emit: (event: string, ...args: any[]) => void;
+  expose: (exposed: Record<PropertyKey, any>) => void;
 }
 
 interface ObjType {
@@ -25,6 +26,7 @@ export interface VNode {
   key: any;
   el: null | HTMLElement | Text;
   shapeFlag: number;
+  ref: any;
 }
 
 /**
@@ -56,6 +58,14 @@ function normalizeChildren(vnode: VNode, children = null) {
   return children;
 }
 
+function normalizeRef(ref: any): { r: any; i: ComponentInstance } {
+  if (ref == null) return;
+  return {
+    r: ref,
+    i: getCurrentRenderingInstance(),
+  };
+}
+
 export function createVNode(type: any, props?: Record<any, any>, children = null) {
   let shapeFlag = 0;
 
@@ -77,6 +87,7 @@ export function createVNode(type: any, props?: Record<any, any>, children = null
     el: null,
     /** 如果是 9 表示 type 是 dom 元素, children 是字符串 */
     shapeFlag,
+    ref: normalizeRef((props || {}).ref),
   };
 
   normalizeChildren(vnode, children);

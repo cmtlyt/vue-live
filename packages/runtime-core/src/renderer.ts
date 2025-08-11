@@ -4,9 +4,10 @@ import { ShapeFlags } from '@vlive/shared';
 import { createAppAPI } from './api-create-app';
 import { ComponentInstance, ComponentVNode, createComponentInstance, setupComponent } from './component';
 import { queueJob } from './scheduler';
-import { shouleUpdateComponent } from './component-render-utils';
+import { renderComponentRoot, shouleUpdateComponent } from './component-render-utils';
 import { updateProps } from './component-props';
 import { updateSlots } from './component-slots';
+import { setRef } from './render-template-ref';
 
 export interface Container extends Element {
   _vnode?: VNode;
@@ -395,11 +396,11 @@ export function createRenderer(options: RenderOptions) {
   const setupRenderEffect = (instance: ComponentInstance, container: Container, anchor = null) => {
     const componentUpdateFn = () => {
       if (!instance.isMounted) {
-        const { vnode, render } = instance;
+        const { vnode } = instance;
         // 挂载前 beforeMounte
         triggerHooks(instance, LifecycleHooks.BEFORE_MOUNT);
         // 调用 render 拿到 subTree, this 指向 setupState
-        const subTree = render.call(instance.proxy);
+        const subTree = renderComponentRoot(instance);
         // 将 subTree 挂载到页面
         patch(null, subTree, container, anchor);
         // 组件的 vnode 的 el, 会指向 subTree 的 el, 但是他们是相同的
@@ -410,7 +411,7 @@ export function createRenderer(options: RenderOptions) {
         // 挂载完成
         triggerHooks(instance, LifecycleHooks.MOUNTED);
       } else {
-        let { vnode, next, render } = instance;
+        let { vnode, next } = instance;
 
         /// 有 next 表示父组件 props 更新触发的更新
         if (next) {
@@ -426,7 +427,7 @@ export function createRenderer(options: RenderOptions) {
         triggerHooks(instance, LifecycleHooks.BEFORE_UPDATE);
 
         // 调用 render 拿到 subTree, this 指向 setupState
-        const subTree = render.call(instance.proxy);
+        const subTree = renderComponentRoot(instance);
         // 将 subTree 挂载到页面
         patch(instance.subTree, subTree, container, anchor);
         // 组件的 vnode 的 el, 会指向 subTree 的 el, 但是他们是相同的
@@ -501,7 +502,7 @@ export function createRenderer(options: RenderOptions) {
       unmount(n1);
       n1 = null;
     }
-    const { type, shapeFlag } = n2;
+    const { type, shapeFlag, ref } = n2;
 
     switch (type) {
       case Text:
@@ -513,6 +514,10 @@ export function createRenderer(options: RenderOptions) {
         } else if (shapeFlag & ShapeFlags.COMPONENT) {
           processComponent(n1 as any, n2 as any, container, anchor);
         }
+    }
+
+    if (ref != null) {
+      setRef(ref, n2);
     }
   };
 
@@ -536,7 +541,7 @@ export function createRenderer(options: RenderOptions) {
 
   /** 卸载元素 */
   const unmount = (vnode: VNode) => {
-    const { type, shapeFlag, children } = vnode;
+    const { shapeFlag, children, ref } = vnode;
 
     // 组件卸载
     if (shapeFlag & ShapeFlags.COMPONENT) {
@@ -547,6 +552,10 @@ export function createRenderer(options: RenderOptions) {
       unmountChildren(children);
     }
     hostRemove(vnode.el);
+
+    if (ref != null) {
+      setRef(ref, null);
+    }
   };
 
   /// 虚拟节点渲染到页面上的功能
