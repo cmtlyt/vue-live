@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="box1"></div>
+    <script type="module">
+      // import { h, createApp } from 'vue/dist/vue.esm-browser.js';
+      import { h, createApp } from '../dist/vue.esm.js';
+
+      function App(props, ctx) {
+        console.debug(props, ctx);
+        ctx.emit('foo', 'bar');
+        return h('div', {}, 'hello ', props.msg);
+      }
+
+      App.props = ['msg'];
+
+      const app = createApp(App, { msg: 'world', count: 0, onFoo: console.debug });
+
+      app.mount('#box1');
+    </script>
+  </body>
+</html>

@@ -2,7 +2,7 @@ import { LifecycleHooks, ReactiveEffect, triggerHooks, type RenderOptions } from
 import { isSameVNodeType, normalizeVNode, Text, type VNode } from './vnode';
 import { ShapeFlags } from '@vlive/shared';
 import { createAppAPI } from './api-create-app';
-import { ComponentInstance, ComponentVNode, createComponentInstance, setupComponent } from './component';
+import { ComponentInstance, StatefulComponentVNode, createComponentInstance, setupComponent } from './component';
 import { queueJob } from './scheduler';
 import { renderComponentRoot, shouleUpdateComponent } from './component-render-utils';
 import { updateProps } from './component-props';
@@ -399,7 +399,7 @@ export function createRenderer(options: RenderOptions) {
     }
   };
 
-  const updateComponentPreRender = (instance: ComponentInstance, nextVNode: ComponentVNode) => {
+  const updateComponentPreRender = (instance: ComponentInstance, nextVNode: StatefulComponentVNode) => {
     /// 复用虚拟节点, 并删除更新标识
     instance.vnode = nextVNode;
     instance.next = null;
@@ -470,7 +470,7 @@ export function createRenderer(options: RenderOptions) {
   };
 
   const mountComponent = (
-    vnode: ComponentVNode,
+    vnode: StatefulComponentVNode,
     container: Container,
     anchor = null,
     parentComponent: ComponentInstance,
@@ -484,7 +484,7 @@ export function createRenderer(options: RenderOptions) {
     setupRenderEffect(instance, container, anchor);
   };
 
-  const updateComponent = (n1: ComponentVNode, n2: ComponentVNode) => {
+  const updateComponent = (n1: StatefulComponentVNode, n2: StatefulComponentVNode) => {
     const instance = (n2.component = n1.component);
     if (shouleUpdateComponent(n1, n2)) {
       // 绑定新的虚拟节点
@@ -501,8 +501,8 @@ export function createRenderer(options: RenderOptions) {
    * 处理组件
    */
   const processComponent = (
-    n1: ComponentVNode,
-    n2: ComponentVNode,
+    n1: StatefulComponentVNode,
+    n2: StatefulComponentVNode,
     container: Container,
     anchor = null,
     parentComponent: ComponentInstance = null,

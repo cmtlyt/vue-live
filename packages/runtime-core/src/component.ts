@@ -6,7 +6,15 @@ import { nextTick } from './scheduler';
 import { initSlots } from './component-slots';
 import { AppContext } from './api-create-app';
 
-export type ComponentVNode = VNode & { type: object };
+export type StatefulComponentVNode = VNode & { type: Record<PropertyKey, any> };
+
+export type FunctionalComponentVNode = VNode & { type: (...args: any[]) => any };
+
+export type ComponentVNode = StatefulComponentVNode | FunctionalComponentVNode;
+
+export type StatefulComponent = ComponentInstance & { type: Record<PropertyKey, any> };
+
+export type FunctionalComponent = ComponentInstance & { type: (...args: any[]) => any };
 
 interface ComponentInstanceCtx {
   _: ComponentInstance;
@@ -18,7 +26,7 @@ export interface ComponentInstance {
   /** createApp 产生的 appContext */
   appContext: AppContext;
   /** 用户声明的组件 props */
-  propsOptions: OmitType<ComponentVNode['type']['props'], string[]>;
+  propsOptions: OmitType<StatefulComponentVNode['type']['props'], string[]>;
   props: ComponentVNode['props'];
   attrs: Record<string, any>;
   /** 子树 (render 的返回值) */
@@ -26,7 +34,7 @@ export interface ComponentInstance {
   /** 组件是否已经挂载 */
   isMounted: boolean;
   /** setup 函数的返回值 */
-  setupState: ReturnType<ComponentVNode['type']['setup']>;
+  setupState: ReturnType<StatefulComponentVNode['type']['setup']>;
   proxy: Record<PropertyKey, any>;
   exposedProxy?: Record<PropertyKey, any>;
   setupContext: SetupContext;
@@ -36,7 +44,7 @@ export interface ComponentInstance {
   /** 新的虚拟节点 */
   next?: ComponentVNode;
   /** 渲染虚拟 dom 的方法 */
-  render: ComponentVNode['type']['render'];
+  render: StatefulComponentVNode['type']['render'];
   update: () => void;
   emit: SetupContext['emit'];
   /** 暴露的属性 */
@@ -64,7 +72,7 @@ export function getComponentPublicInstance(instance: ComponentInstance) {
   }
 }
 
-export function createComponentInstance(vnode: VNode & { type: object }, parent: ComponentInstance = null) {
+export function createComponentInstance(vnode: StatefulComponentVNode, parent: ComponentInstance = null) {
   const { type } = vnode;
 
   /** 如果 parent 不存在, 则从 vnode 中直接获取 appContext */
@@ -155,7 +163,7 @@ function handleSetupResult(instance: ComponentInstance, setupResult: ComponentIn
   }
 }
 
-function setupStatefulComponent(instance: ComponentInstance) {
+function setupStatefulComponent(instance: StatefulComponent) {
   const { type } = instance;
 
   instance.proxy = new Proxy(instance.ctx, publicInstanceProxyHandlers);
@@ -213,7 +221,7 @@ function createSetupContext(instance: ComponentInstance): SetupContext {
   };
 }
 
-export function setupComponent(instance: ComponentInstance & { type: object }) {
+export function setupComponent(instance: StatefulComponent) {
   const { type } = instance;
 
   // 初始化属性

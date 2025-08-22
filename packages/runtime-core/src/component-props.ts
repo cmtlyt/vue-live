@@ -1,8 +1,8 @@
-import { hasOwn, isArray } from '@vlive/shared';
-import { ComponentInstance, ComponentVNode } from './component';
+import { hasOwn, isArray, ShapeFlags } from '@vlive/shared';
+import { ComponentInstance, StatefulComponentVNode } from './component';
 import { reactive } from '@vlive/reactivity';
 
-export function normalizePropsOptions(props: ComponentVNode['type']['props']): Record<PropertyKey, any> {
+export function normalizePropsOptions(props: StatefulComponentVNode['type']['props']): Record<PropertyKey, any> {
   if (isArray(props)) {
     return props.reduce((prev, cur) => {
       prev[cur] = {};
@@ -22,11 +22,16 @@ function setFullProps(
   props: Record<PropertyKey, any>,
   attrs: Record<PropertyKey, any>,
 ) {
-  const { propsOptions } = instance;
+  const { propsOptions, vnode } = instance;
+
+  const isFunctionalComponent = vnode.shapeFlag & ShapeFlags.FUNCTIONAL_COMPONENT;
+
+  const hasProps = Object.keys(propsOptions).length > 0;
+
   if (rawProps) {
     Object.entries(rawProps).forEach(([key, value]) => {
       // 如果 propsOptions 有这个 key, 应该放到 props
-      if (hasOwn(propsOptions, key)) {
+      if (hasOwn(propsOptions, key) || (isFunctionalComponent && !hasProps)) {
         props[key] = value;
       }
       // 否则放到 attrs
@@ -52,7 +57,7 @@ export function initProps(instance: ComponentInstance) {
   instance.attrs = attrs;
 }
 
-export function updateProps(instance: ComponentInstance, nextVNode: ComponentVNode) {
+export function updateProps(instance: ComponentInstance, nextVNode: StatefulComponentVNode) {
   const { props, attrs } = instance;
   const rawProps = nextVNode.props;
 

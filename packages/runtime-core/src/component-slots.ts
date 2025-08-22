@@ -1,5 +1,5 @@
 import { ShapeFlags } from '@vlive/shared';
-import { ComponentInstance, ComponentVNode } from './component';
+import { ComponentInstance, StatefulComponentVNode } from './component';
 
 export function initSlots(instance: ComponentInstance) {
   const { slots, vnode } = instance;
@@ -12,7 +12,7 @@ export function initSlots(instance: ComponentInstance) {
   }
 }
 
-export function updateSlots(instance: ComponentInstance, vnode: ComponentVNode) {
+export function updateSlots(instance: ComponentInstance, vnode: StatefulComponentVNode) {
   const { slots } = instance;
 
   if (vnode.shapeFlag & ShapeFlags.SLOTS_CHILDREN) {

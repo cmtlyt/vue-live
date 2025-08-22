@@ -21,7 +21,7 @@ interface ObjType {
 export interface VNode {
   __v_isVNode: boolean;
   appContext: AppContext;
-  type: string | symbol | ObjType;
+  type: string | symbol | ObjType | ((props: OmitType<ObjType['props'], string[]>, ctx: SetupContext) => VNode);
   component?: ComponentInstance;
   props: Record<PropertyKey, any>;
   children: any[];
@@ -75,6 +75,8 @@ export function createVNode(type: any, props?: Record<any, any>, children = null
     shapeFlag |= ShapeFlags.ELEMENT;
   } else if (isObject(type)) {
     shapeFlag |= ShapeFlags.STATEFUL_COMPONENT;
+  } else if (isFunction(type)) {
+    shapeFlag |= ShapeFlags.FUNCTIONAL_COMPONENT;
   }
 
   const vnode: VNode = {
