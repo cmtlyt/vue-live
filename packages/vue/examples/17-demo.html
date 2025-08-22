@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="box1"></div>
+    <script type="module">
+      // import { h, createApp, ref, provide, inject } from 'vue/dist/vue.esm-browser.js';
+      import { h, createApp, ref, provide, inject, getCurrentInstance } from '../dist/vue.esm.js';
+
+      const Child = {
+        setup(props, {}) {
+          const count = inject('count', '拿不到了');
+          const a = inject('a');
+
+          console.debug(count, a);
+
+          return () => {
+            return h('div', count.value);
+          };
+        },
+      };
+
+      const Child2 = {
+        setup(props, {}) {
+          const count = ref(0);
+          provide('count', count);
+          console.debug(getCurrentInstance().provides !== app.context.provides);
+
+          setInterval(() => {
+            count.value++;
+          }, 1000);
+
+          return () => {
+            return h(Child);
+          };
+        },
+      };
+
+      const App = {
+        setup(props, {}) {
+          console.debug(getCurrentInstance().provides === app.context.provides);
+          return () => {
+            return h(Child2);
+          };
+        },
+      };
+
+      const app = createApp(App);
+
+      const aaa = ref(0);
+      app.provide('a', aaa);
+
+      app.mount('#box1');
+    </script>
+  </body>
+</html>

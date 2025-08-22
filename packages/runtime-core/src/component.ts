@@ -4,6 +4,7 @@ import { initProps, normalizePropsOptions } from './component-props';
 import { hasOwn, isFunction, isObject, OmitType } from '@vlive/shared';
 import { nextTick } from './scheduler';
 import { initSlots } from './component-slots';
+import { AppContext } from './api-create-app';
 
 export type ComponentVNode = VNode & { type: object };
 
@@ -15,7 +16,7 @@ export interface ComponentInstance {
   type: ComponentVNode['type'];
   vnode: ComponentVNode;
   /** createApp 产生的 appContext */
-  appContext: Record<PropertyKey, any>;
+  appContext: AppContext;
   /** 用户声明的组件 props */
   propsOptions: OmitType<ComponentVNode['type']['props'], string[]>;
   props: ComponentVNode['props'];
@@ -41,6 +42,7 @@ export interface ComponentInstance {
   /** 暴露的属性 */
   exposed?: Record<PropertyKey, any>;
   parent: ComponentInstance;
+  provides: Record<PropertyKey, any>;
 }
 
 export function getComponentPublicInstance(instance: ComponentInstance) {
@@ -87,6 +89,7 @@ export function createComponentInstance(vnode: VNode & { type: object }, parent:
     update: null,
     emit: null,
     parent,
+    provides: parent?.provides || appContext?.provides,
   };
 
   instance.ctx = { _: instance };
