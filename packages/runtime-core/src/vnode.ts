@@ -1,6 +1,7 @@
 import { isArray, isFunction, isNumber, isObject, isString, OmitType, ShapeFlags } from '@vlive/shared';
 import { ComponentInstance, getCurrentRenderingInstance } from './component';
 import { AppContext } from './api-create-app';
+import { isTeleport } from '@vlive/runtime-dom';
 
 /** 文本节点标记 */
 export const Text = Symbol('v-txt');
@@ -73,6 +74,8 @@ export function createVNode(type: any, props?: Record<any, any>, children = null
 
   if (isString(type)) {
     shapeFlag |= ShapeFlags.ELEMENT;
+  } else if (isTeleport(type)) {
+    shapeFlag |= ShapeFlags.TELEPORT;
   } else if (isObject(type)) {
     shapeFlag |= ShapeFlags.STATEFUL_COMPONENT;
   } else if (isFunction(type)) {

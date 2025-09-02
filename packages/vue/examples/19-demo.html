@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="box2"></div>
+    <div id="box1"></div>
+    <script type="module">
+      // import { h, createApp, Teleport } from 'vue/dist/vue.esm-browser.js';
+      import { h, ref, createApp, Teleport } from '../dist/vue.esm.js';
+
+      const App = {
+        setup() {
+          const list = ref([0, 1]);
+          const to = ref('body');
+          const disabled = ref(true);
+
+          setTimeout(() => {
+            list.value.push(2);
+            to.value = '#box2';
+            disabled.value = false;
+          }, 1000);
+
+          return () => {
+            return h('div', { class: 'container' }, [
+              h('div', {}, '我是 container 的子节点'),
+              h(Teleport, { to: to.value, disabled: disabled.value }, [
+                '我是 teleport 的子节点',
+                ...list.value.map(item => h('span', item)),
+              ]),
+            ]);
+          };
+        },
+      };
+
+      const app = createApp(App);
+      app.mount('#box1');
+
+      setTimeout(() => {
+        app.unmount();
+      }, 3000);
+    </script>
+  </body>
+</html>

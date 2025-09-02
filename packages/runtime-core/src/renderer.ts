@@ -290,8 +290,7 @@ export function createRenderer(options: RenderOptions) {
   };
 
   /** 修订子元素 */
-  const patchChildren = (n1: VNode, n2: VNode, parentComponent: ComponentInstance = null) => {
-    const el = n2.el as HTMLElement;
+  const patchChildren = (n1: VNode, n2: VNode, el: HTMLElement, parentComponent: ComponentInstance = null) => {
     /// 新节点子节点是文本
     ///   老的是数组
     ///   老的是文本
@@ -351,7 +350,7 @@ export function createRenderer(options: RenderOptions) {
     const newProps = n2.props;
     patchProps(el, oldProps, newProps);
     /// 更新 children
-    patchChildren(n1, n2, parentComponent);
+    patchChildren(n1, n2, el, parentComponent);
   };
 
   /**
@@ -548,6 +547,12 @@ export function createRenderer(options: RenderOptions) {
           processElement(n1, n2, container, anchor, parentComponent);
         } else if (shapeFlag & ShapeFlags.COMPONENT) {
           processComponent(n1 as any, n2 as any, container, anchor, parentComponent);
+        } else if (shapeFlag & ShapeFlags.TELEPORT) {
+          (type as any).process(n1, n2, container, anchor, parentComponent, {
+            mountChildren,
+            patchChildren,
+            options,
+          });
         }
     }
 
@@ -581,9 +586,10 @@ export function createRenderer(options: RenderOptions) {
     // 组件卸载
     if (shapeFlag & ShapeFlags.COMPONENT) {
       unmountComponent(vnode.component);
-    }
-
-    if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+    } else if (shapeFlag & ShapeFlags.TELEPORT) {
+      unmountChildren(children);
+      return;
+    } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
       unmountChildren(children);
     }
     hostRemove(vnode.el);
