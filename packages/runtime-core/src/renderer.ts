@@ -1,4 +1,4 @@
-import { LifecycleHooks, ReactiveEffect, triggerHooks, type RenderOptions } from '@vlive/runtime-dom';
+import { isKeepAlive, LifecycleHooks, ReactiveEffect, triggerHooks, type RenderOptions } from '@vlive/runtime-dom';
 import { isSameVNodeType, normalizeVNode, Text, type VNode } from './vnode';
 import { ShapeFlags } from '@vlive/shared';
 import { createAppAPI } from './api-create-app';
@@ -444,7 +444,7 @@ export function createRenderer(options: RenderOptions) {
         // 调用 render 拿到 subTree, this 指向 setupState
         const subTree = renderComponentRoot(instance);
         // 将 subTree 挂载到页面
-        patch(instance.subTree, subTree, container, anchor);
+        patch(instance.subTree, subTree, container, anchor, instance);
         // 组件的 vnode 的 el, 会指向 subTree 的 el, 但是他们是相同的
         next.el = subTree.el;
         // 更新
@@ -476,6 +476,11 @@ export function createRenderer(options: RenderOptions) {
   ) => {
     // 创建组件实例
     const instance = createComponentInstance(vnode, parentComponent);
+    if (isKeepAlive(vnode.type)) {
+      instance.ctx.renderer = {
+        options,
+      };
+    }
     vnode.component = instance;
     // 初始化组件状态
     setupComponent(instance);
@@ -507,6 +512,10 @@ export function createRenderer(options: RenderOptions) {
     parentComponent: ComponentInstance = null,
   ) => {
     if (n1 == null) {
+      if (n2.shapeFlag & ShapeFlags.COMPONENT_KEPT_ALIVE) {
+        parentComponent.ctx.activate?.(n2, container, anchor);
+        return;
+      }
       // 挂载
       mountComponent(n2, container, anchor, parentComponent);
     } else {
@@ -582,6 +591,12 @@ export function createRenderer(options: RenderOptions) {
   /** 卸载元素 */
   const unmount = (vnode: VNode) => {
     const { shapeFlag, children, ref } = vnode;
+
+    if (shapeFlag & ShapeFlags.COMPONENT_SHOULD_KEEP_ALIVE) {
+      vnode.component.parent.ctx.deactivate?.(vnode);
+      // 需要缓存, 不卸载
+      return;
+    }
 
     // 组件卸载
     if (shapeFlag & ShapeFlags.COMPONENT) {

@@ -5,6 +5,7 @@ import { hasOwn, isFunction, isObject, OmitType } from '@vlive/shared';
 import { nextTick } from './scheduler';
 import { initSlots } from './component-slots';
 import { AppContext } from './api-create-app';
+import { Container, RenderOptions } from '@vlive/runtime-dom';
 
 export type StatefulComponentVNode = VNode & { type: Record<PropertyKey, any> };
 
@@ -18,6 +19,10 @@ export type FunctionalComponent = ComponentInstance & { type: (...args: any[]) =
 
 interface ComponentInstanceCtx {
   _: ComponentInstance;
+
+  renderer?: { options: RenderOptions };
+  activate?: (vnode: VNode, container: Container, anchor: any) => void;
+  deactivate?: (vnode: VNode) => void;
 }
 
 export interface ComponentInstance {

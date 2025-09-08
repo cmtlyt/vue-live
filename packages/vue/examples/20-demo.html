@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="box2"></div>
+    <div id="box1"></div>
+    <script type="module">
+      // import { h, createApp, ref, KeepAlive, onMounted, onUnmounted } from 'vue/dist/vue.esm-browser.js';
+      import { h, createApp, ref, KeepAlive, onMounted, onUnmounted } from '../dist/vue.esm.js';
+
+      const Comp1 = {
+        name: 'Comp1',
+        props: ['type'],
+        setup({ type = 'keepalive' }) {
+          onMounted(() => console.debug(`[${type}]`, 'Comp1 Mounted'));
+          onUnmounted(() => console.debug(`[${type}]`, 'Comp1 Unmounted'));
+
+          return () => {
+            return h('div', ['comp1', h('input')]);
+          };
+        },
+      };
+
+      const Comp2 = {
+        name: 'Comp2',
+        props: ['type'],
+        setup({ type = 'keepalive' }) {
+          onMounted(() => console.debug(`[${type}]`, 'Comp2 Mounted'));
+          onUnmounted(() => console.debug(`[${type}]`, 'Comp2 Unmounted'));
+
+          return () => {
+            return h('div', ['comp2', h('input')]);
+          };
+        },
+      };
+
+      const App = {
+        name: 'App',
+        setup() {
+          const components = [Comp1, Comp2];
+          const index = ref(0);
+
+          const onClick = () => {
+            index.value = ++index.value % components.length;
+          };
+
+          return () => {
+            return h('div', { class: 'container' }, [
+              h('div', {}, '我是 container 的子节点'),
+              h('button', { onClick }, '切换组件'),
+              h(components[index.value], { type: 'general' }),
+              h(KeepAlive, {}, () => h(components[index.value])),
+            ]);
+          };
+        },
+      };
+
+      const app = createApp(App);
+      app.mount('#box1');
+    </script>
+  </body>
+</html>

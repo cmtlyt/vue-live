@@ -14,12 +14,13 @@ export interface SetupContext {
 }
 
 interface ObjType {
-  props: Record<PropertyKey, any> | string[];
-  setup: (props: OmitType<ObjType['props'], string[]>, ctx: SetupContext) => Record<PropertyKey, any> | (() => VNode);
-  render: () => VNode;
+  props?: Record<PropertyKey, any> | string[];
+  setup?: (props: OmitType<ObjType['props'], string[]>, ctx: SetupContext) => Record<PropertyKey, any> | (() => VNode);
+  render?: () => VNode;
 }
 
 export interface VNode {
+  name?: string;
   __v_isVNode: boolean;
   appContext: AppContext;
   type: string | symbol | ObjType | ((props: OmitType<ObjType['props'], string[]>, ctx: SetupContext) => VNode);

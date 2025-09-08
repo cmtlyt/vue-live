@@ -4,7 +4,7 @@ import { Container } from '../renderer';
 import { VNode } from '../vnode';
 
 export function isTeleport(type) {
-  return type.__isTeleport || false;
+  return (type || {}).__isTeleport || false;
 }
 
 interface Internals {

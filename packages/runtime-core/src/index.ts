@@ -8,3 +8,4 @@ export * from './api-lifecycle';
 export * from './use-template-ref';
 export * from './api-inject';
 export * from './components/teleport';
+export * from './components/keep-alive';
