@@ -17,10 +17,15 @@ export type StatefulComponent = ComponentInstance & { type: Record<PropertyKey, 
 
 export type FunctionalComponent = ComponentInstance & { type: (...args: any[]) => any };
 
+interface CtxRenderer {
+  options: RenderOptions;
+  unmount: (vnode: VNode) => void;
+}
+
 interface ComponentInstanceCtx {
   _: ComponentInstance;
 
-  renderer?: { options: RenderOptions };
+  renderer?: CtxRenderer;
   activate?: (vnode: VNode, container: Container, anchor: any) => void;
   deactivate?: (vnode: VNode) => void;
 }

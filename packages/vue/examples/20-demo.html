@@ -38,10 +38,23 @@
         },
       };
 
+      const Comp3 = {
+        name: 'Comp3',
+        props: ['type'],
+        setup({ type = 'keepalive' }) {
+          onMounted(() => console.debug(`[${type}]`, 'Comp3 Mounted'));
+          onUnmounted(() => console.debug(`[${type}]`, 'Comp3 Unmounted'));
+
+          return () => {
+            return h('div', ['comp3', h('input')]);
+          };
+        },
+      };
+
       const App = {
         name: 'App',
         setup() {
-          const components = [Comp1, Comp2];
+          const components = [Comp1, Comp2, Comp3];
           const index = ref(0);
 
           const onClick = () => {
@@ -52,8 +65,8 @@
             return h('div', { class: 'container' }, [
               h('div', {}, '我是 container 的子节点'),
               h('button', { onClick }, '切换组件'),
-              h(components[index.value], { type: 'general' }),
-              h(KeepAlive, {}, () => h(components[index.value])),
+              // h(components[index.value], { type: 'general' }),
+              h(KeepAlive, { max: 2 }, () => h(components[index.value])),
             ]);
           };
         },

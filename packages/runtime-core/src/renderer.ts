@@ -479,6 +479,7 @@ export function createRenderer(options: RenderOptions) {
     if (isKeepAlive(vnode.type)) {
       instance.ctx.renderer = {
         options,
+        unmount,
       };
     }
     vnode.component = instance;
