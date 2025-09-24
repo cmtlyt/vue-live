@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="box2"></div>
+    <div id="box1"></div>
+    <script type="module">
+      // import { h, createApp, Fragment } from 'vue/dist/vue.esm-browser.js';
+      import { h, createApp, ref, Fragment } from '../dist/vue.esm.js';
+
+      const App = {
+        name: 'App',
+        setup() {
+          const age = ref(18);
+
+          setTimeout(() => {
+            age.value++;
+          }, 1000);
+
+          return () => {
+            return h(Fragment, null, [
+              //
+              h('div', null, 'name: xxx'),
+              h('div', null, `age: ${age.value}`),
+            ]);
+          };
+        },
+      };
+
+      const app = createApp(App);
+      app.mount('#box1');
+
+      setTimeout(() => {
+        app.unmount();
+      }, 2000);
+    </script>
+  </body>
+</html>

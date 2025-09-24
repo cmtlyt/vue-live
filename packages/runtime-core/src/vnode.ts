@@ -6,6 +6,8 @@ import { isTeleport } from '@vlive/runtime-dom';
 /** 文本节点标记 */
 export const Text = Symbol('v-txt');
 
+export const Fragment = Symbol('Fragment');
+
 export interface SetupContext {
   attrs: Record<PropertyKey, any>;
   slots: Record<PropertyKey, () => VNode>;
@@ -126,3 +128,4 @@ export function normalizeVNode(vnode: any) {
   }
   return vnode;
 }
+

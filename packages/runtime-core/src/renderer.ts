@@ -1,5 +1,5 @@
 import { isKeepAlive, LifecycleHooks, ReactiveEffect, triggerHooks, type RenderOptions } from '@vlive/runtime-dom';
-import { isSameVNodeType, normalizeVNode, Text, type VNode } from './vnode';
+import { Fragment, isSameVNodeType, normalizeVNode, Text, type VNode } from './vnode';
 import { ShapeFlags } from '@vlive/shared';
 import { createAppAPI } from './api-create-app';
 import { ComponentInstance, StatefulComponentVNode, createComponentInstance, setupComponent } from './component';
@@ -91,7 +91,7 @@ export function createRenderer(options: RenderOptions) {
   } = options;
 
   /** 挂载子元素 */
-  const mountChildren = (children: VNode[], el: HTMLElement, parentComponent: ComponentInstance = null) => {
+  const mountChildren = (children: VNode[], el: Container, parentComponent: ComponentInstance = null) => {
     for (let i = 0; i < children.length; ++i) {
       // 标准化 vnode
       const child = (children[i] = normalizeVNode(children[i]));
@@ -294,7 +294,7 @@ export function createRenderer(options: RenderOptions) {
   };
 
   /** 修订子元素 */
-  const patchChildren = (n1: VNode, n2: VNode, el: HTMLElement, parentComponent: ComponentInstance = null) => {
+  const patchChildren = (n1: VNode, n2: VNode, el: Container, parentComponent: ComponentInstance = null) => {
     /// 新节点子节点是文本
     ///   老的是数组
     ///   老的是文本
@@ -399,6 +399,14 @@ export function createRenderer(options: RenderOptions) {
       if (n1.children !== n2.children) {
         hostSetText(el, n2.children);
       }
+    }
+  };
+
+  const processFragment = (n1: VNode, n2: VNode, container: Container, parentComponent: ComponentInstance) => {
+    if (n1 == null) {
+      mountChildren(n2.children, container, parentComponent);
+    } else {
+      patchChildren(n1, n2, container, parentComponent);
     }
   };
 
@@ -562,6 +570,9 @@ export function createRenderer(options: RenderOptions) {
       case Text:
         processText(n1, n2, container, anchor);
         break;
+      case Fragment:
+        processFragment(n1, n2, container, parentComponent);
+        break;
       default:
         if (shapeFlag & ShapeFlags.ELEMENT) {
           processElement(n1, n2, container, anchor, parentComponent);
@@ -601,7 +612,7 @@ export function createRenderer(options: RenderOptions) {
 
   /** 卸载元素 */
   const unmount = (vnode: VNode) => {
-    const { shapeFlag, children, ref, transition } = vnode;
+    const { type, shapeFlag, children, ref, transition } = vnode;
 
     if (shapeFlag & ShapeFlags.COMPONENT_SHOULD_KEEP_ALIVE) {
       vnode.component.parent.ctx.deactivate?.(vnode);
@@ -610,6 +621,11 @@ export function createRenderer(options: RenderOptions) {
     }
 
     const remove = () => {
+      if (type === Fragment) {
+        unmountChildren(children);
+        return;
+      }
+
       // 组件卸载
       if (shapeFlag & ShapeFlags.COMPONENT) {
         unmountComponent(vnode.component);
@@ -620,7 +636,7 @@ export function createRenderer(options: RenderOptions) {
         unmountChildren(children);
       }
 
-      hostRemove(vnode.el);
+      vnode.el && hostRemove(vnode.el);
     };
 
     if (!transition) {
