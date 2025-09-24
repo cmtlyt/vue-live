@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="box2"></div>
+    <div id="box1"></div>
+    <script type="module">
+      // import { h, createApp, ref } from 'vue/dist/vue.esm-browser.js';
+      import { h, createApp, ref, createVNode } from '../dist/vue.esm.js';
+
+      const App = {
+        name: 'App',
+        setup() {
+          const count = ref(0);
+          const className = ref('container');
+          const content = ref('');
+
+          setInterval(() => {
+            className.value = `container-${++count.value}`;
+            content.value = `'${count.value}'`;
+          }, 1000);
+
+          return () => {
+            const vnode = createVNode(
+              //
+              'div',
+              {
+                get class() {
+                  console.debug('patch class');
+                  return className.value;
+                },
+                style: { color: 'red', content: content.value },
+              },
+              count.value,
+              5,
+            );
+            return vnode;
+          };
+        },
+      };
+
+      const app = createApp(App);
+      app.mount('#box1');
+    </script>
+  </body>
+</html>

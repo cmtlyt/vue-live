@@ -1,6 +1,6 @@
 import { isKeepAlive, LifecycleHooks, ReactiveEffect, triggerHooks, type RenderOptions } from '@vlive/runtime-dom';
 import { Fragment, isSameVNodeType, normalizeVNode, Text, type VNode } from './vnode';
-import { ShapeFlags } from '@vlive/shared';
+import { PatchFlags, ShapeFlags } from '@vlive/shared';
 import { createAppAPI } from './api-create-app';
 import { ComponentInstance, StatefulComponentVNode, createComponentInstance, setupComponent } from './component';
 import { queueJob } from './scheduler';
@@ -349,10 +349,28 @@ export function createRenderer(options: RenderOptions) {
   const patchElement = (n1: VNode, n2: VNode, parentComponent: ComponentInstance = null) => {
     /// 复用 dom 元素
     const el = (n2.el = n1.el) as HTMLElement;
-    /// 更新 props
+    const { patchFlag } = n2;
+
     const oldProps = n1.props;
     const newProps = n2.props;
-    patchProps(el, oldProps, newProps);
+
+    if (patchFlag > 0) {
+      if (patchFlag & PatchFlags.CLASS) {
+        hostPatchProp(el, 'class', oldProps?.class, newProps?.class);
+      }
+      if (patchFlag & PatchFlags.STYLE) {
+        hostPatchProp(el, 'style', oldProps?.style, newProps?.style);
+      }
+      if (patchFlag & PatchFlags.TEXT) {
+        if (n1.children !== n2.children) {
+          hostSetElementText(el, n2.children);
+        }
+        return;
+      }
+    } else {
+      /// 更新 props
+      patchProps(el, oldProps, newProps);
+    }
     /// 更新 children
     patchChildren(n1, n2, el, parentComponent);
   };

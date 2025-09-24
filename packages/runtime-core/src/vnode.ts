@@ -31,6 +31,7 @@ export interface VNode {
   name?: string;
   __v_isVNode: boolean;
   appContext: AppContext;
+  patchFlag: number;
   type: string | symbol | ObjType | ((props: OmitType<ObjType['props'], string[]>, ctx: SetupContext) => VNode);
   component?: ComponentInstance;
   props: Record<PropertyKey, any>;
@@ -79,7 +80,7 @@ function normalizeRef(ref: any): { r: any; i: ComponentInstance } {
   };
 }
 
-export function createVNode(type: any, props?: Record<any, any>, children = null) {
+export function createVNode(type: any, props?: Record<any, any>, children = null, patchFlag = 0) {
   let shapeFlag = 0;
 
   if (isString(type)) {
@@ -99,6 +100,7 @@ export function createVNode(type: any, props?: Record<any, any>, children = null
     type,
     props,
     children: null,
+    patchFlag,
     /** 做 diff 用的 */
     key: (props || {}).key,
     /** 虚拟节点要挂载的元素 */

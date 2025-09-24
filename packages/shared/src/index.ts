@@ -1,3 +1,4 @@
 export * from './types';
 export * from './utils';
 export * from './shape-flags';
+export * from './patch-flags';
