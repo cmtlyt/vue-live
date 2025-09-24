@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="box2"></div>
+    <div id="box1"></div>
+    <script type="module">
+      // import { h, createApp, defineAsyncComponent } from 'vue/dist/vue.esm-browser.js';
+      import { h, createApp, defineAsyncComponent } from '../dist/vue.esm.js';
+
+      const App = {
+        name: 'App',
+        setup() {
+          // const comp = defineAsyncComponent(() => {
+          //   return new Promise(resolve => {
+          //     setTimeout(() => {
+          //       resolve(import('./22-async-comp.ts'));
+          //     }, 1000);
+          //   });
+          // });
+
+          const comp = defineAsyncComponent({
+            loader: () => {
+              return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                  if (Math.random() < 0.5) return reject();
+
+                  resolve(import('./22-async-comp.ts'));
+                }, 1000);
+              });
+            },
+            loadingComponent: {
+              render: () => {
+                return h('span', null, 'loading');
+              },
+            },
+            errorComponent: {
+              render: () => {
+                return h('span', null, 'load error');
+              },
+            },
+            // timeout: 300,
+          });
+
+          return () => {
+            return h(comp, { msg: 'props msg' });
+          };
+        },
+      };
+
+      const app = createApp(App);
+      app.mount('#box1');
+    </script>
+  </body>
+</html>

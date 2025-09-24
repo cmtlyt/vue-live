@@ -10,3 +10,4 @@ export * from './api-inject';
 export * from './components/teleport';
 export * from './components/keep-alive';
 export * from './components/transition';
+export * from './api-async-component';
