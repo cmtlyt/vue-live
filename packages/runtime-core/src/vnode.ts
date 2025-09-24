@@ -19,6 +19,12 @@ interface ObjType {
   render?: () => VNode;
 }
 
+interface TransitionHooks {
+  beforeEnter: (el: HTMLElement) => void;
+  enter: (el: HTMLElement) => void;
+  leave: (el: HTMLElement | Text, remove: () => void) => void;
+}
+
 export interface VNode {
   name?: string;
   __v_isVNode: boolean;
@@ -31,6 +37,7 @@ export interface VNode {
   el: null | HTMLElement | Text;
   shapeFlag: number;
   ref: any;
+  transition?: TransitionHooks;
 }
 
 /**

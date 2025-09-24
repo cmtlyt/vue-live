@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="box2"></div>
+    <div id="box1"></div>
+    <style>
+      .v-enter-active,
+      .v-leave-active {
+        transition: opacity 0.5s ease;
+      }
+
+      .v-enter-from,
+      .v-leave-to {
+        opacity: 0;
+      }
+    </style>
+    <script type="module">
+      // import { h, createApp, ref, Transition } from 'vue/dist/vue.esm-browser.js';
+      import { h, createApp, ref, Transition } from '../dist/vue.esm.js';
+
+      const App = {
+        name: 'App',
+        setup() {
+          const show = ref(true);
+          const onClick = () => {
+            show.value = !show.value;
+          };
+
+          return () => {
+            return h('div', { class: 'container' }, [
+              h('button', { onClick }, '切换'),
+              h(
+                Transition,
+                {
+                  appear: false,
+                  onBeforeEnter(el) {
+                    console.debug('beforeEnter', el);
+                  },
+                  // onEnter(el, done) {
+                  //   console.debug('entry', el, done);
+                  //   setTimeout(done, 2000);
+                  // },
+                  // onLeave(el, done) {
+                  //   console.debug('leave', el, done);
+                  //   setTimeout(done, 2000);
+                  // },
+                },
+                () => (show.value ? h('p', 'hello world') : null),
+              ),
+            ]);
+          };
+        },
+      };
+
+      const app = createApp(App);
+      app.mount('#box1');
+    </script>
+  </body>
+</html>

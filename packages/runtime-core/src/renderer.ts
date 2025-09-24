@@ -106,7 +106,7 @@ export function createRenderer(options: RenderOptions) {
     anchor = null,
     parentComponent: ComponentInstance = null,
   ) => {
-    const { type, props, children, shapeFlag } = vnode;
+    const { type, props, children, shapeFlag, transition } = vnode;
     /// 创建 dom 节点
     const el = hostCreateElement(type);
 
@@ -119,7 +119,11 @@ export function createRenderer(options: RenderOptions) {
       }
     }
 
+    transition?.beforeEnter(el);
+
     hostInsert(el, container, anchor);
+
+    transition?.enter(el);
 
     /// 挂载子节点
     if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
@@ -446,7 +450,7 @@ export function createRenderer(options: RenderOptions) {
         // 将 subTree 挂载到页面
         patch(instance.subTree, subTree, container, anchor, instance);
         // 组件的 vnode 的 el, 会指向 subTree 的 el, 但是他们是相同的
-        next.el = subTree.el;
+        next.el = subTree?.el;
         // 更新
         instance.subTree = subTree;
 
@@ -539,6 +543,12 @@ export function createRenderer(options: RenderOptions) {
   ) => {
     // 如果两次传递的同一个虚拟节点则什么都不干
     if (n1 === n2) return;
+
+    if (n1 && n2 == null) {
+      unmount(n1);
+      return;
+    }
+
     if (n1 && !isSameVNodeType(n1, n2)) {
       // 不是同一个节点则获取下一个元素, 用于将 n2 挂载到 n1 原来的位置
       anchor = hostNextSibling(n1.el);
@@ -591,7 +601,7 @@ export function createRenderer(options: RenderOptions) {
 
   /** 卸载元素 */
   const unmount = (vnode: VNode) => {
-    const { shapeFlag, children, ref } = vnode;
+    const { shapeFlag, children, ref, transition } = vnode;
 
     if (shapeFlag & ShapeFlags.COMPONENT_SHOULD_KEEP_ALIVE) {
       vnode.component.parent.ctx.deactivate?.(vnode);
@@ -599,16 +609,25 @@ export function createRenderer(options: RenderOptions) {
       return;
     }
 
-    // 组件卸载
-    if (shapeFlag & ShapeFlags.COMPONENT) {
-      unmountComponent(vnode.component);
-    } else if (shapeFlag & ShapeFlags.TELEPORT) {
-      unmountChildren(children);
-      return;
-    } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-      unmountChildren(children);
+    const remove = () => {
+      // 组件卸载
+      if (shapeFlag & ShapeFlags.COMPONENT) {
+        unmountComponent(vnode.component);
+      } else if (shapeFlag & ShapeFlags.TELEPORT) {
+        unmountChildren(children);
+        return;
+      } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+        unmountChildren(children);
+      }
+
+      hostRemove(vnode.el);
+    };
+
+    if (!transition) {
+      remove();
+    } else {
+      transition.leave(vnode.el, remove);
     }
-    hostRemove(vnode.el);
 
     if (ref != null) {
       setRef(ref, null);
