@@ -442,7 +442,13 @@ export function createRenderer(options: RenderOptions) {
     if (n1 == null) {
       mountChildren(n2.children, container, parentComponent);
     } else {
-      patchChildren(n1, n2, container, parentComponent);
+      const { patchFlag, dynamicChildren } = n2;
+      // 稳定的子节点才能走 dynamicChildren 的 patch
+      if (dynamicChildren && n1.dynamicChildren && patchFlag & PatchFlags.STABLE_FRAGMENT) {
+        patchBlockChildren(n1.dynamicChildren, dynamicChildren, container, parentComponent);
+      } else {
+        patchChildren(n1, n2, container, parentComponent);
+      }
     }
   };
 

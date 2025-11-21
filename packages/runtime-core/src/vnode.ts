@@ -1,7 +1,7 @@
 import { isArray, isFunction, isNumber, isObject, isString, OmitType, ShapeFlags } from '@vlive/shared';
 import { ComponentInstance, getCurrentRenderingInstance } from './component';
 import { AppContext } from './api-create-app';
-import { isTeleport } from '@vlive/runtime-dom';
+import { isRef, isTeleport } from '@vlive/runtime-dom';
 
 /** 文本节点标记 */
 export const Text = Symbol('v-txt');
@@ -173,4 +173,20 @@ export function createElementBlock(type: any, props?: Record<any, any>, children
   setupBlock(vnode);
 
   return vnode;
+}
+
+export function renderList<T, R>(list: T[], cb: (item: T, idx: number, arr: T[]) => R): R[] {
+  return list.map(cb);
+}
+
+export function toDisplayString(val: any) {
+  if (isString(val)) return val;
+  if (val == null) return '';
+  if (isRef(val)) {
+    return String(val.value);
+  }
+  if (typeof val === 'object') {
+    return JSON.stringify(val);
+  }
+  return String(val);
 }

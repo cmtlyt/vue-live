@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="box2"></div>
+    <div id="box1"></div>
+    <script type="module">
+      // import { createApp, ref, createVNode, openBlock, createElementBlock } from 'vue/dist/vue.esm-browser.js';
+      import {
+        createApp,
+        ref,
+        createVNode,
+        openBlock,
+        createElementBlock,
+        Fragment,
+        renderList,
+        toDisplayString,
+      } from '../dist/vue.esm.js';
+
+      const App = {
+        setup() {
+          const list = ref(['a', 'b', 'c']);
+
+          setTimeout(() => {
+            list.value = ['b', 'a'];
+          }, 1000);
+
+          return () => {
+            openBlock();
+
+            const vnode = createElementBlock('div', null, [
+              (openBlock(),
+              createElementBlock(
+                Fragment,
+                null,
+                renderList(
+                  list.value,
+                  item => (openBlock(), createElementBlock('div', { key: item }, toDisplayString(item), 1)),
+                ),
+                128,
+              )),
+            ]);
+
+            console.debug(vnode);
+
+            return vnode;
+          };
+        },
+      };
+
+      const app = createApp(App);
+      app.mount('#box1');
+    </script>
+  </body>
+</html>
