@@ -349,7 +349,7 @@ export function createRenderer(options: RenderOptions) {
   const patchElement = (n1: VNode, n2: VNode, parentComponent: ComponentInstance = null) => {
     /// 复用 dom 元素
     const el = (n2.el = n1.el) as HTMLElement;
-    const { patchFlag } = n2;
+    const { patchFlag, dynamicChildren } = n2;
 
     const oldProps = n1.props;
     const newProps = n2.props;
@@ -371,8 +371,26 @@ export function createRenderer(options: RenderOptions) {
       /// 更新 props
       patchProps(el, oldProps, newProps);
     }
-    /// 更新 children
-    patchChildren(n1, n2, el, parentComponent);
+
+    if (dynamicChildren && n1.dynamicChildren) {
+      // n2 和 n1 的 dynamicChildren 都存在的话, 单独更新动态节点即可
+      patchBlockChildren(n1.dynamicChildren, dynamicChildren, el, parentComponent);
+    } else {
+      /// 全量更新 children
+      patchChildren(n1, n2, el, parentComponent);
+    }
+  };
+
+  const patchBlockChildren = (
+    c1: VNode[],
+    c2: VNode[],
+    container: Container,
+    parentComponent: ComponentInstance = null,
+  ) => {
+    // 值对比当前 block 的动态子节点
+    for (let i = 0; i < c2.length; ++i) {
+      patch(c1[i], c2[i], container, null, parentComponent);
+    }
   };
 
   /**

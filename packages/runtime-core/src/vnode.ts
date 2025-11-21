@@ -36,6 +36,7 @@ export interface VNode {
   component?: ComponentInstance;
   props: Record<PropertyKey, any>;
   children: any[];
+  dynamicChildren: VNode[];
   key: any;
   el: null | HTMLElement | Text;
   shapeFlag: number;
@@ -80,7 +81,7 @@ function normalizeRef(ref: any): { r: any; i: ComponentInstance } {
   };
 }
 
-export function createVNode(type: any, props?: Record<any, any>, children = null, patchFlag = 0) {
+export function createVNode(type: any, props?: Record<any, any>, children = null, patchFlag = 0, isBlock = false) {
   let shapeFlag = 0;
 
   if (isString(type)) {
@@ -100,6 +101,7 @@ export function createVNode(type: any, props?: Record<any, any>, children = null
     type,
     props,
     children: null,
+    dynamicChildren: null,
     patchFlag,
     /** 做 diff 用的 */
     key: (props || {}).key,
@@ -109,6 +111,11 @@ export function createVNode(type: any, props?: Record<any, any>, children = null
     shapeFlag,
     ref: normalizeRef((props || {}).ref),
   };
+
+  if (patchFlag > 0 && currentBlock && !isBlock) {
+    // currentBlock 存在并且为动态 vnode
+    currentBlock.push(vnode);
+  }
 
   normalizeChildren(vnode, children);
 
@@ -131,3 +138,39 @@ export function normalizeVNode(vnode: any) {
   return vnode;
 }
 
+const blockStack: VNode[][] = [];
+
+/** 当前正在收集的块 */
+let currentBlock: VNode[] | null = null;
+
+export function openBlock() {
+  currentBlock = [];
+  blockStack.push(currentBlock);
+}
+
+export function closeBlock() {
+  blockStack.pop();
+  currentBlock = blockStack.at(-1) || null;
+}
+
+/**
+ * 收集到的动态节点放到 vnode 上
+ */
+export function setupBlock(vnode: VNode) {
+  vnode.dynamicChildren = currentBlock;
+  closeBlock();
+  if (currentBlock) {
+    currentBlock.push(vnode);
+  }
+}
+
+/**
+ * 创建块元素, 块元素只能被上级块收集, 不能被自己收集
+ */
+export function createElementBlock(type: any, props?: Record<any, any>, children = null, patchFlag = 0) {
+  const vnode = createVNode(type, props, children, patchFlag, true);
+
+  setupBlock(vnode);
+
+  return vnode;
+}

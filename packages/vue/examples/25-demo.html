@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="box2"></div>
+    <div id="box1"></div>
+    <script type="module">
+      // import { createApp, ref, createVNode, openBlock, createElementBlock } from 'vue/dist/vue.esm-browser.js';
+      import { createApp, ref, createVNode, openBlock, createElementBlock } from '../dist/vue.esm.js';
+
+      const App = {
+        setup() {
+          const count = ref(0);
+          const className = ref('container');
+          const flag = ref(true);
+          setTimeout(() => {
+            count.value++;
+            className.value = 'dv';
+            flag.value = false;
+          }, 1000);
+
+          return () => {
+            openBlock();
+            // const vnode = createElementBlock('div', null, [
+            //   // 第一个是动态节点
+            //   createVNode('span', null, count.value, 1),
+            //   // 下面三个永远不会变, 没有必要对比
+            //   createVNode('p', null, 111),
+            //   createVNode('p', null, 222),
+            //   createVNode('p', null, 333),
+            // ]);
+            // const vnode = createElementBlock('div', null, [
+            //   createVNode('p', { class: className.value }, [111, '-', createVNode('span', null, count.value, 1)], 2),
+            //   createVNode('p', null, 222),
+            //   createVNode('p', null, 333),
+            // ]);
+            // 嵌套收集
+            // const vnode = createElementBlock('div', null, [
+            //   flag.value
+            //     ? (openBlock(), createElementBlock('p', { key: 111 }, [createVNode('span', null, count.value, 1)]))
+            //     : (openBlock(), createElementBlock('h1', { key: 111 }, [createVNode('span', null, count.value, 1)])),
+            // ]);
+            // 被自己收集的问题
+            const vnode = createElementBlock(
+              'div',
+              { class: className.value },
+              [createVNode('h2', null, count.value, 1)],
+              2,
+            );
+            console.debug(vnode);
+            return vnode;
+          };
+        },
+      };
+
+      const app = createApp(App);
+      app.mount('#box1');
+    </script>
+  </body>
+</html>
