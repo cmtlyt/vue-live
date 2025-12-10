@@ -1,0 +1,28 @@
+{
+  "name": "@vlive/compiler-core",
+  "version": "0.0.1",
+  "description": "编译时",
+  "main": "dist/compiler-core.cjs.js",
+  "module": "dist/compiler-core.esm.js",
+  "files": [
+    "dist"
+  ],
+  "sideEffect": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cmtlyt/vue-live.git",
+    "directory": "packages/compiler-core"
+  },
+  "buildOptions": {
+    "name": "CompilerCore",
+    "formats": [
+      "esm-builder",
+      "esm-browser",
+      "cjs",
+      "global"
+    ]
+  },
+  "devDependencies": {
+    "@vue/compiler-dom": "^3.5.25"
+  }
+}
