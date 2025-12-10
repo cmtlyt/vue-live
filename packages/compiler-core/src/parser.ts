@@ -43,6 +43,8 @@ function addNode(node) {
   }
 }
 
+let currentProp = null;
+
 const tokenizer = new Tokenizer({
   ontext(start, end) {
     const content = getSlice(start, end);
@@ -75,8 +77,27 @@ const tokenizer = new Tokenizer({
       stack.pop();
       setLocEnd(lastNode.loc, end + 1);
     } else {
-      console.debug('写错了');
+      console.debug('onclosetag 写错了');
     }
+  },
+  onattrname(start, end) {
+    currentProp = {
+      name: getSlice(start, end),
+      loc: getLoc(start, end),
+      value: undefined,
+    };
+  },
+  onattrvalue(start, end, isNq) {
+    const value = getSlice(start, end);
+    currentProp.value = value;
+    setLocEnd(currentProp.loc, end + (isNq ? 0 : 1));
+    if (currentOpenTag) {
+      const props = (currentOpenTag.props ||= []);
+      props.push(currentProp);
+    } else {
+      console.debug('onattrvalue 写错了');
+    }
+    currentProp = null;
   },
 });
 

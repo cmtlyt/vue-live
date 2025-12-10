@@ -38,7 +38,7 @@ export enum State {
   /** 解析指令修饰符 (v-on:click.prevent) */
   InDirModifier,
   /** 属性名后的状态 */
-  AfterAttrNAme,
+  AfterAttrName,
   /** 准备解析属性值 */
   BeforeAttrValue,
   /** 双引号属性值 "value" */
@@ -91,12 +91,17 @@ function isTagStart(char: string) {
   return /[a-z]/i.test(char);
 }
 
+function isWhitespace(char: string) {
+  return char === ' ' || char === '\n' || char === '\t' || char === '\r';
+}
+
 type TokenizerCallback = (start: number, end: number) => void;
 
-type TokenizerCallbackNames = 'ontext' | 'onopentagname' | 'onclosetag';
+type TokenizerCallbackNames = 'ontext' | 'onopentagname' | 'onclosetag' | 'onattrname';
 
 type TokenizerCallbacks = Record<TokenizerCallbackNames, TokenizerCallback> & {
   onopentagend: () => void;
+  onattrvalue: (start: number, end: number, isNq?: boolean) => void;
 };
 
 export interface Pos {
@@ -150,6 +155,30 @@ export class Tokenizer {
           this.stateInClosingTagName(char);
           break;
         }
+        case State.InAttrName: {
+          this.stateInAttrName(char);
+          break;
+        }
+        case State.AfterAttrName: {
+          this.stateAfterAttrName(char);
+          break;
+        }
+        case State.BeforeAttrValue: {
+          this.stateBeforeAttrValue(char);
+          break;
+        }
+        case State.InAttrValueDq: {
+          this.stateInAttrValueDq(char);
+          break;
+        }
+        case State.InAttrValueSq: {
+          this.stateInAttrValueSq(char);
+          break;
+        }
+        case State.InAttrValueNq: {
+          this.stateInAttrValueNq(char);
+          break;
+        }
       }
       ++this.index;
     }
@@ -188,7 +217,7 @@ export class Tokenizer {
   }
 
   private stateInTagName(char: string) {
-    if (char === '>' || char === ' ') {
+    if (char === '>' || isWhitespace(char)) {
       // 标签名结束
       this.cbs.onopentagname(this.sectionStart, this.index);
       // 状态切换到开始解析属性名
@@ -206,6 +235,9 @@ export class Tokenizer {
       this.state = State.Text;
       // 从下一个开始不能包含 >
       this.sectionStart = this.index + 1;
+    } else if (!isWhitespace(char)) {
+      this.state = State.InAttrName;
+      this.sectionStart = this.index;
     }
   }
 
@@ -215,6 +247,59 @@ export class Tokenizer {
       this.state = State.Text;
       // 从下一个开始不能包含 >
       this.sectionStart = this.index + 1;
+    }
+  }
+
+  private stateInAttrName(char: string) {
+    if (char === '=' || isWhitespace(char)) {
+      // 属性名解析好了
+      this.cbs.onattrname(this.sectionStart, this.index);
+      this.state = State.AfterAttrName;
+      this.sectionStart = this.index + 1;
+      this.stateAfterAttrName(char);
+    }
+  }
+
+  private stateAfterAttrName(char: string) {
+    if (char === '=') {
+      this.state = State.BeforeAttrValue;
+      this.sectionStart = this.index + 1;
+    }
+  }
+
+  private stateBeforeAttrValue(char: string) {
+    if (char === '"') {
+      // 开始解析属性值
+      this.state = State.InAttrValueDq;
+      this.sectionStart = this.index + 1;
+    } else if (char === "'") {
+      this.state = State.InAttrValueSq;
+      this.sectionStart = this.index + 1;
+    } else if (!isWhitespace(char)) {
+      this.state = State.InAttrValueNq;
+      this.sectionStart = this.index;
+    }
+  }
+
+  private stateInAttrValueDq(char: string) {
+    if (char === '"') {
+      this.cbs.onattrvalue(this.sectionStart, this.index);
+      this.state = State.BeforeAttrName;
+    }
+  }
+
+  private stateInAttrValueSq(char: string) {
+    if (char === "'") {
+      this.cbs.onattrvalue(this.sectionStart, this.index);
+      this.state = State.BeforeAttrName;
+    }
+  }
+
+  private stateInAttrValueNq(char: string) {
+    if (char === '>' || isWhitespace(char)) {
+      this.cbs.onattrvalue(this.sectionStart, this.index, true);
+      this.state = State.BeforeAttrName;
+      this.stateBeforeAttrName(char);
     }
   }
 
@@ -232,6 +317,7 @@ export class Tokenizer {
 
   getPos(index: number) {
     return {
+      // TODO
       line: 1,
       column: index + 1,
       offset: index,
