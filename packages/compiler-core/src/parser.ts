@@ -1,5 +1,5 @@
 import { NodeTypes } from './ast';
-import { Pos, Tokenizer } from './tokenizer';
+import { isWhitespace, Pos, Tokenizer } from './tokenizer';
 
 let currentInput = '';
 let currentRoot = null;
@@ -98,6 +98,25 @@ const tokenizer = new Tokenizer({
       console.debug('onattrvalue 写错了');
     }
     currentProp = null;
+  },
+  oninterpolation(start, end) {
+    // {{ msg }}
+    let innerStart = start + 2;
+    let innerEnd = end - 2;
+    // ' msg '
+    // 去除前端空格
+    for (; isWhitespace(currentInput[innerStart]); ++innerStart);
+    // 去除后端空格
+    for (; isWhitespace(currentInput[innerEnd - 1]); --innerEnd);
+    addNode({
+      type: NodeTypes.INTERPOLATION,
+      loc: getLoc(start, end),
+      content: {
+        type: NodeTypes.SIMPLE_EXPRESSION,
+        content: getSlice(innerStart, innerEnd),
+        loc: getLoc(innerStart, innerEnd),
+      },
+    });
   },
 });
 

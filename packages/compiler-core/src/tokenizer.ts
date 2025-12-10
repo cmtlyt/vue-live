@@ -91,13 +91,13 @@ function isTagStart(char: string) {
   return /[a-z]/i.test(char);
 }
 
-function isWhitespace(char: string) {
+export function isWhitespace(char: string) {
   return char === ' ' || char === '\n' || char === '\t' || char === '\r';
 }
 
 type TokenizerCallback = (start: number, end: number) => void;
 
-type TokenizerCallbackNames = 'ontext' | 'onopentagname' | 'onclosetag' | 'onattrname';
+type TokenizerCallbackNames = 'ontext' | 'onopentagname' | 'onclosetag' | 'onattrname' | 'oninterpolation';
 
 type TokenizerCallbacks = Record<TokenizerCallbackNames, TokenizerCallback> & {
   onopentagend: () => void;
@@ -179,6 +179,17 @@ export class Tokenizer {
           this.stateInAttrValueNq(char);
           break;
         }
+        case State.InterpolationOpen: {
+          this.stateInterpolationOpen(char);
+          break;
+        }
+        case State.Interpolation: {
+          this.stateInterpolation(char);
+          break;
+        }
+        case State.InterpolationClose: {
+          this.stateInterpolationClose(char);
+        }
       }
       ++this.index;
     }
@@ -198,6 +209,8 @@ export class Tokenizer {
       this.state = State.BeforeTagName;
       // 移动 section 位置
       this.sectionStart = this.index;
+    } else if (char === '{') {
+      this.state = State.InterpolationOpen;
     }
   }
 
@@ -300,6 +313,32 @@ export class Tokenizer {
       this.cbs.onattrvalue(this.sectionStart, this.index, true);
       this.state = State.BeforeAttrName;
       this.stateBeforeAttrName(char);
+    }
+  }
+
+  private stateInterpolationOpen(char: string) {
+    if (char === '{') {
+      if (this.sectionStart < this.index - 1) {
+        this.cbs.ontext(this.sectionStart, this.index - 1);
+      }
+      this.state = State.Interpolation;
+      this.sectionStart = this.index - 1;
+    }
+  }
+
+  private stateInterpolation(char: string) {
+    if (char === '}') {
+      this.state = State.InterpolationClose;
+    }
+  }
+
+  private stateInterpolationClose(char: string) {
+    if (char === '}') {
+      this.cbs.oninterpolation(this.sectionStart, this.index + 1);
+      this.state = State.Text;
+      this.sectionStart = this.index + 1;
+    } else {
+      this.state = State.Interpolation;
     }
   }
 

@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module">
+      import { parse as vueParse } from '../node_modules/@vue/compiler-dom/dist/compiler-dom.esm-browser.js';
+      import { parse } from '../dist/compiler-core.esm.js';
+
+      const input = `<div id="app" class='test-sq' data-test   =   "test-space" data-test-nq  =   test-nq>hello <span class=test-nq-span data-test="123">world{{name}}</span><i>!</i>test {{ msg }}</div>`;
+
+      console.debug('[vue]:>', vueParse(input));
+      console.debug('[self]:>', parse(input));
+    </script>
+  </body>
+</html>
