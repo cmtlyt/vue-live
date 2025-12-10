@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module">
+      import { parse as vueParse } from '../node_modules/@vue/compiler-dom/dist/compiler-dom.esm-browser.js';
+      import { parse } from '../dist/compiler-core.esm.js';
+
+      const input = `<div>hello <span>world</span><i>!</i></div>`;
+
+      console.debug('[vue]:>', vueParse(input));
+      console.debug('[self]:>', parse(input));
+    </script>
+  </body>
+</html>

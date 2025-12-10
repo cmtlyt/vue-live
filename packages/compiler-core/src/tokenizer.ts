@@ -87,6 +87,24 @@ export enum State {
   InSFCRootTagName,
 }
 
+function isTagStart(char: string) {
+  return /[a-z]/i.test(char);
+}
+
+type TokenizerCallback = (start: number, end: number) => void;
+
+type TokenizerCallbackNames = 'ontext' | 'onopentagname' | 'onclosetag';
+
+type TokenizerCallbacks = Record<TokenizerCallbackNames, TokenizerCallback> & {
+  onopentagend: () => void;
+};
+
+export interface Pos {
+  line: number;
+  column: number;
+  offset: number;
+}
+
 /**
  * 基于状态机实现的解析器
  *
@@ -102,24 +120,34 @@ export class Tokenizer {
   /** 当前正在解析的字符串 */
   buffer = '';
 
-  constructor(public cbs: Record<string, (...args: any[]) => any> = {}) {}
+  constructor(public cbs: TokenizerCallbacks) {}
 
   parse(input: string) {
     this.buffer = input;
     while (this.index < this.buffer.length) {
-      const str = this.buffer[this.index];
+      const char = this.buffer[this.index];
       switch (this.state) {
         case State.Text: {
           // 解析文本
-          if (str === '<') {
-            this.cbs.ontext(this.sectionStart, this.index);
-            // 切换状态
-            this.state = State.BeforeTagName;
-            // 移动 section 位置
-            this.sectionStart = this.index + 1;
-            console.log('切换状态, 开始解析标签');
-          }
-
+          this.stateText(char);
+          break;
+        }
+        case State.BeforeTagName: {
+          // 解析开始标签
+          this.stateBeforeTagName(char);
+          break;
+        }
+        case State.InTagName: {
+          // 解析标签名
+          this.stateInTagName(char);
+          break;
+        }
+        case State.BeforeAttrName: {
+          this.stateBeforeAttrName(char);
+          break;
+        }
+        case State.InClosingTagName: {
+          this.stateInClosingTagName(char);
           break;
         }
       }
@@ -127,6 +155,67 @@ export class Tokenizer {
     }
 
     this.cleanup();
+  }
+
+  private stateText(char: string) {
+    if (char === '<') {
+      console.log('切换状态, 开始解析标签');
+      // 处理没处理的文本
+      if (this.sectionStart < this.index) {
+        this.cbs.ontext(this.sectionStart, this.index);
+      }
+      // 开始解析标签
+      // 切换状态
+      this.state = State.BeforeTagName;
+      // 移动 section 位置
+      this.sectionStart = this.index;
+    }
+  }
+
+  private stateBeforeTagName(char: string) {
+    if (isTagStart(char)) {
+      // 开始标签
+      this.state = State.InTagName;
+      this.sectionStart = this.index;
+    } else if (char === '/') {
+      this.state = State.InClosingTagName;
+      // 当前匹配的字符串是斜杠, 需要从下一个开始
+      this.sectionStart = this.index + 1;
+    } else {
+      // 不是标签
+      this.state = State.Text;
+    }
+  }
+
+  private stateInTagName(char: string) {
+    if (char === '>' || char === ' ') {
+      // 标签名结束
+      this.cbs.onopentagname(this.sectionStart, this.index);
+      // 状态切换到开始解析属性名
+      this.state = State.BeforeAttrName;
+      this.sectionStart = this.index;
+      this.stateBeforeAttrName(char);
+    }
+  }
+
+  private stateBeforeAttrName(char: string) {
+    if (char === '>') {
+      // 开始标签解析结束
+      this.cbs.onopentagend();
+      // 继续解析文本
+      this.state = State.Text;
+      // 从下一个开始不能包含 >
+      this.sectionStart = this.index + 1;
+    }
+  }
+
+  private stateInClosingTagName(char: string) {
+    if (char === '>') {
+      this.cbs.onclosetag(this.sectionStart, this.index);
+      this.state = State.Text;
+      // 从下一个开始不能包含 >
+      this.sectionStart = this.index + 1;
+    }
   }
 
   cleanup() {

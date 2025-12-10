@@ -1,5 +1,5 @@
 import { NodeTypes } from './ast';
-import { Tokenizer } from './tokenizer';
+import { Pos, Tokenizer } from './tokenizer';
 
 let currentInput = '';
 let currentRoot = null;
@@ -8,7 +8,13 @@ function getSlice(start: number, end: number) {
   return currentInput.slice(start, end);
 }
 
-function getLoc(start: number, end: number) {
+interface Loc {
+  start: Pos;
+  end: Pos;
+  source: string;
+}
+
+function getLoc(start: number, end: number): Loc {
   return {
     // 开始的位置信息
     start: tokenizer.getPos(start),
@@ -18,15 +24,59 @@ function getLoc(start: number, end: number) {
   };
 }
 
+function setLocEnd(loc: Loc, end: number) {
+  loc.source = getSlice(loc.start.offset, end);
+  loc.end = tokenizer.getPos(end);
+}
+
+let currentOpenTag = null;
+
+const stack = [];
+
+function addNode(node) {
+  // 找到栈的最后一个, 如果有就往 children 里面加, 如果没有就加入到 root 中
+  const lastNode = stack.at(-1);
+  if (lastNode) {
+    lastNode.children.push(node);
+  } else {
+    currentRoot.children.push(node);
+  }
+}
+
 const tokenizer = new Tokenizer({
-  ontext(start: number, end: number) {
+  ontext(start, end) {
     const content = getSlice(start, end);
     const textNode = {
       type: NodeTypes.TEXT,
       content,
       loc: getLoc(start, end),
     };
-    currentRoot.children.push(textNode);
+    addNode(textNode);
+  },
+  onopentagname(start, end) {
+    const tag = getSlice(start, end);
+    // 把 currentOpenTag 的作用域提升到外面, 用于方便解析属性节点的时候可以拿到他
+    currentOpenTag = {
+      type: NodeTypes.ELEMENT,
+      tag,
+      children: [],
+      loc: getLoc(start - 1, end),
+    };
+  },
+  onopentagend() {
+    addNode(currentOpenTag);
+    stack.push(currentOpenTag);
+    currentOpenTag = null;
+  },
+  onclosetag(start, end) {
+    const tag = getSlice(start, end);
+    const lastNode = stack.at(-1);
+    if (lastNode && lastNode.tag === tag) {
+      stack.pop();
+      setLocEnd(lastNode.loc, end + 1);
+    } else {
+      console.debug('写错了');
+    }
   },
 });
 
