@@ -124,6 +124,8 @@ export class Tokenizer {
   sectionStart = 0;
   /** 当前正在解析的字符串 */
   buffer = '';
+  /** 保存所有换行符的位置 */
+  newLines: number[] = [];
 
   constructor(public cbs: TokenizerCallbacks) {}
 
@@ -131,6 +133,9 @@ export class Tokenizer {
     this.buffer = input;
     while (this.index < this.buffer.length) {
       const char = this.buffer[this.index];
+      if (char === '\n') {
+        this.newLines.push(this.index);
+      }
       switch (this.state) {
         case State.Text: {
           // 解析文本
@@ -355,10 +360,20 @@ export class Tokenizer {
   }
 
   getPos(index: number) {
+    let line = 1;
+    let column = index + 1;
+    for (let i = this.newLines.length - 1; i >= 0; i--) {
+      const newLineIndex = this.newLines[i];
+      if (index > newLineIndex) {
+        line = i + 2;
+        column = index - newLineIndex;
+        break;
+      }
+    }
     return {
       // TODO
-      line: 1,
-      column: index + 1,
+      line,
+      column,
       offset: index,
     };
   }

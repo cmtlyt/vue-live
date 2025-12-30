@@ -45,6 +45,29 @@ function addNode(node) {
 
 let currentProp = null;
 
+function isAllWhitespace(text: string) {
+  for (let i = 0; i < text.length; i++) {
+    if (!isWhitespace(text[i])) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function condenseWhitespace(children) {
+  const _children = [...children];
+  for (let i = 0; i < _children.length; i++) {
+    const node = _children[i];
+    if (node.type === NodeTypes.TEXT) {
+      if (isAllWhitespace(node.content)) {
+        if (i === 0 || i === _children.length - 1) _children[i] = null;
+        else node.content = ' ';
+      }
+    }
+  }
+  return _children.filter(Boolean);
+}
+
 const tokenizer = new Tokenizer({
   ontext(start, end) {
     const content = getSlice(start, end);
@@ -79,6 +102,8 @@ const tokenizer = new Tokenizer({
     } else {
       console.debug('onclosetag 写错了');
     }
+
+    lastNode.children = condenseWhitespace(lastNode.children);
   },
   onattrname(start, end) {
     currentProp = {
