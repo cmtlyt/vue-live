@@ -68,6 +68,14 @@ function condenseWhitespace(children) {
   return _children.filter(Boolean);
 }
 
+function reset() {
+  currentInput = '';
+  currentRoot = null;
+  currentOpenTag = null;
+  currentProp = null;
+  stack.length = 0;
+}
+
 const tokenizer = new Tokenizer({
   ontext(start, end) {
     const content = getSlice(start, end);
@@ -155,7 +163,9 @@ function createRoot(source: string) {
 }
 
 export function parse(input: string) {
-  // 把迪昂钱正在解析的字符串暴露给外部
+  reset();
+
+  // 把当前正在解析的字符串暴露给外部
   currentInput = input;
 
   const root = createRoot(input);
@@ -163,6 +173,8 @@ export function parse(input: string) {
 
   // 开始解析 input
   tokenizer.parse(input);
+
+  root.children = condenseWhitespace(root.children);
 
   return root;
 }

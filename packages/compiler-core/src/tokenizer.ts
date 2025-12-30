@@ -371,7 +371,6 @@ export class Tokenizer {
       }
     }
     return {
-      // TODO
       line,
       column,
       offset: index,
