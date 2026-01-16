@@ -8,7 +8,7 @@
 
 import { NodeTypes } from './ast';
 import { parse } from './parser';
-import { helperNameMap, TO_DISPLAY_STRING } from './runtime-helper';
+import { TO_DISPLAY_STRING } from './runtime-helper';
 
 function traverseChildren(node, ctx) {
   node.children.forEach(child => {
@@ -54,10 +54,31 @@ function transformElement(node, ctx) {
   }
 }
 
+function isText(node) {
+  return node.type === NodeTypes.TEXT || node.type === NodeTypes.INTERPOLATION;
+}
+
 function transformText(node, ctx) {
   if (node.type === NodeTypes.ELEMENT) {
-    // TODO
-    return () => {};
+    return () => {
+      const children = node.children;
+      const _children = [];
+      for (const child of children) {
+        const last = _children.at(-1);
+        if (last && isText(child) && (isText(last) || last.type === NodeTypes.COMPOUND_EXPRESSION)) {
+          if (last.type !== NodeTypes.COMPOUND_EXPRESSION) {
+            _children[_children.length - 1] = {
+              type: NodeTypes.COMPOUND_EXPRESSION,
+              children: [last],
+            };
+          }
+          _children.at(-1).children.push('+', child);
+        } else {
+          _children.push(child);
+        }
+      }
+      node.children = _children;
+    };
   }
 }
 
