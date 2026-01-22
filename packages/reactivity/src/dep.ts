@@ -61,5 +61,4 @@ export function trigger(target: any, key: any) {
 
     propagate(dep.subs);
   }
-
 }

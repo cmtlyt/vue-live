@@ -44,3 +44,11 @@ export enum NodeTypes {
   /** 缓存表达式 */
   JS_CACHE_EXPRESSION,
 }
+
+export function createCallExpression(callee, args) {
+  return {
+    type: NodeTypes.JS_CALL_EXPRESSION,
+    callee,
+    arguments: args,
+  };
+}
