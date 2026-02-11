@@ -52,3 +52,36 @@ export function createCallExpression(callee, args) {
     arguments: args,
   };
 }
+
+export function createSimpleExpression(content, isStatic = true) {
+  return {
+    type: NodeTypes.SIMPLE_EXPRESSION,
+    content,
+    isStatic,
+  };
+}
+
+export function createObjectProperty(key, value) {
+  return {
+    type: NodeTypes.JS_PROPERTY,
+    key,
+    value,
+  };
+}
+
+export function createObjectExpression(properties) {
+  return {
+    type: NodeTypes.JS_OBJECT_EXPRESSION,
+    properties,
+  };
+}
+
+export function createVNodeCall(callee, tag, props, children) {
+  return {
+    type: NodeTypes.VNODE_CALL,
+    callee,
+    tag,
+    props,
+    children,
+  };
+}

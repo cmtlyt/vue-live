@@ -11,9 +11,10 @@
       import { compile as vueCompile } from '../node_modules/@vue/compiler-dom/dist/compiler-dom.esm-browser.js';
       import { compile } from '../dist/compiler-core.esm.js';
 
-      const input = `<div>aa {{ msg }} <p></p> bb {{c}} <p></p> cc</div>
+      // const input = `<div>aa {{ msg }} <p></p> bb {{c}} <p></p> cc</div>
 
-`;
+      // `;
+      const input = `<div id="app" :class="test">aa {{ msg }} <p></p> bb {{c}}</div>`;
 
       console.debug('[vue]:>', vueCompile(input));
       console.debug('[self]:>', compile(input));
