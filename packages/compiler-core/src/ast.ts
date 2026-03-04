@@ -1,3 +1,5 @@
+import { CREATE_ELEMENT_BLOCK, CREATE_ELEMENT_VNODE, OPEN_BLOCK } from './runtime-helper';
+
 export enum NodeTypes {
   /** 根节点 */
   ROOT,
@@ -84,4 +86,12 @@ export function createVNodeCall(callee, tag, props, children) {
     props,
     children,
   };
+}
+
+export function covertToBlock(node, ctx) {
+  node.isBlock = true;
+  node.callee = CREATE_ELEMENT_BLOCK;
+  ctx.helper(OPEN_BLOCK);
+  ctx.helper(CREATE_ELEMENT_BLOCK);
+  ctx.removeHelper(CREATE_ELEMENT_VNODE);
 }
