@@ -6,6 +6,7 @@
  * 3. codegen 生成 render 函数
  */
 
+import { generate } from './codegen';
 import { parse } from './parser';
 import { transform } from './transform';
 
@@ -14,5 +15,5 @@ export function compile(template: string) {
 
   transform(ast);
 
-  return { ast };
+  return { ast, code: generate(ast) };
 }

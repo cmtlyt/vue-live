@@ -100,6 +100,7 @@ function createRootCodegenNode(root, ctx: Context) {
     if (isElementNode(child)) {
       const { codegenNode } = child;
       covertToBlock(codegenNode, ctx);
+      root.codegenNode = codegenNode;
     } else {
       // 不是元素节点可能是文本之类
       root.codegenNode = child;
