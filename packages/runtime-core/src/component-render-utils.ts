@@ -52,7 +52,7 @@ export function renderComponentRoot(instance: ComponentInstance) {
   setCurrentRenderingInstance(instance);
   try {
     if (vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
-      const subTree = instance.render.call(instance.proxy);
+      const subTree = instance.render.call(instance.proxy, instance.proxy);
       return subTree;
     } else {
       return (vnode as FunctionalComponentVNode).type(instance.props, {

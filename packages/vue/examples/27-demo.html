@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script src="../dist/vue.iife.js"></script>
+  </head>
+  <body>
+    <div id="box1"></div>
+    <script type="module">
+      // import { createApp, ref, createVNode, openBlock, createElementBlock } from 'vue/dist/vue.esm-browser.js';
+      const {
+        createApp,
+        ref,
+      } = Vue;
+
+      const App = {
+        template: `<div class="container" :aria-content="count" style="color: red;">{{count}}</div>`,
+        setup() {
+          const count = ref(0);
+
+          setInterval(() => count.value++, 1000)
+
+          return {
+            count,
+          };
+        },
+      };
+
+      const app = createApp(App);
+      app.mount('#box1');
+    </script>
+  </body>
+</html>

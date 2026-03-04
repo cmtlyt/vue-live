@@ -372,7 +372,7 @@ export function createRenderer(options: RenderOptions) {
       patchProps(el, oldProps, newProps);
     }
 
-    if (dynamicChildren && n1.dynamicChildren) {
+    if (dynamicChildren.length && n1.dynamicChildren.length) {
       // n2 和 n1 的 dynamicChildren 都存在的话, 单独更新动态节点即可
       patchBlockChildren(n1.dynamicChildren, dynamicChildren, el, parentComponent);
     } else {

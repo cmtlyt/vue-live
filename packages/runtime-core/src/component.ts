@@ -6,6 +6,7 @@ import { nextTick } from './scheduler';
 import { initSlots } from './component-slots';
 import { AppContext } from './api-create-app';
 import { Container, RenderOptions } from '@vlive/runtime-dom';
+import { compile } from '@vlive/compiler-core';
 
 export type StatefulComponentVNode = VNode & { type: Record<PropertyKey, any> };
 
@@ -195,8 +196,19 @@ function setupStatefulComponent(instance: StatefulComponent) {
 
   // 如果处理完了还是没有 render, 则使用组件的 render 属性
   if (!instance.render) {
-    instance.render = type.render;
+    if (type.render) {
+      instance.render = type.render;
+    } else if (type.template) {
+      instance.render = compileToFunction(type.template);
+    }
   }
+}
+
+function compileToFunction(template: string) {
+  const code = compile(template);
+  const render = new Function(code.code)
+  console.debug(code.code);
+  return render();
 }
 
 function emit(instance: ComponentInstance, event: string, ...args: any[]) {

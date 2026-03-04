@@ -58,22 +58,22 @@ function genNodeListAsArray(nodes, ctx: Context) {
   genNodeList(nodes, ctx);
 
   ctx.deindent();
-  ctx.push(`],`)
+  ctx.push(`]`)
 }
 
 function genNodeList(nodes, ctx: Context) {
   nodes.forEach((node, idx) => {
     if (node == null) {
-      ctx.push(`null,`)
+      ctx.push(`null`)
     } else if (isString(node)) {
-      ctx.push(`${node},`);
+      ctx.push(`${node}`);
     } else if (isArray(node)) {
       genNodeListAsArray(node, ctx);
     } else {
       genNode(node, ctx);
-      ctx.push(',');
     }
     if(idx < nodes.length - 1){
+      ctx.push(',');
       ctx.newline();
     }
   });
@@ -102,7 +102,31 @@ function genVNodeCall(node, ctx: Context) {
   genNodeList(args, ctx);
 
   ctx.deindent();
-  ctx.push('),');
+  ctx.push(')');
+}
+
+function genInterpolation(node, ctx: Context) {
+  console.debug(node);
+  ctx.push(node.content.content);
+}
+
+function genObjectExpression(node, ctx: Context) {
+  const { properties } = node;
+  ctx.push(`{`);
+  ctx.indent();
+
+  properties.forEach((prop, idx) => {
+    const { key, value } = prop;
+    ctx.push(key.isStatic ? `${JSON.stringify(key.content)}: ` : `[${key.content}]: `);
+    ctx.push(value.isStatic ? `${JSON.stringify(value.content)}` :`_ctx.${value.content}`);
+    if (idx < properties.length - 1) {
+      ctx.push(',');
+      ctx.newline();
+    }
+  });
+
+  ctx.deindent();
+  ctx.push(`}`);
 }
 
 function genNode(node, ctx: Context) {
@@ -112,6 +136,12 @@ function genNode(node, ctx: Context) {
       break;
     case NodeTypes.VNODE_CALL:
       genVNodeCall(node, ctx);
+      break;
+    case NodeTypes.INTERPOLATION:
+      genInterpolation(node, ctx);
+      break;
+    case NodeTypes.JS_OBJECT_EXPRESSION:
+      genObjectExpression(node, ctx);
       break;
   }
 }
@@ -132,7 +162,5 @@ export function generate(ast) {
   ctx.deindent();
   ctx.push(`}`);
   
-  console.debug(ctx.code);
-
   return ctx.code;
 }
